@@ -13,35 +13,28 @@ Amplify.configure(outputs);
 const client = generateClient<Schema>();
 
 export default function App() {
-  const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
-
-  function listTodos() {
-    client.models.Todo.observeQuery().subscribe({
-      next: (data) => setTodos([...data.items]),
-    });
-  }
+  const [dialogues, setDialogues] = useState<
+    Array<Schema["Dialogue"]["type"]>
+  >([]);
 
   useEffect(() => {
-    listTodos();
-  }, []);
-
-  function createTodo() {
-    client.models.Todo.create({
-      content: window.prompt("Todo content"),
+    const sub = client.models.Dialogue.observeQuery().subscribe({
+      next: (data) => setDialogues([...data.items]),
     });
-  }
+    return () => sub.unsubscribe();
+  }, []);
 
   return (
     <main>
-      <h1>My todos</h1>
-      <button onClick={createTodo}>+ new</button>
+      <h1>Practice dialogues</h1>
+      <p>Sign in to load dialogues from the API.</p>
       <ul>
-        {todos.map((todo) => (
-          <li key={todo.id}>{todo.content}</li>
+        {dialogues.map((d) => (
+          <li key={d.id}>{d.title}</li>
         ))}
       </ul>
       <div>
-        🥳 App successfully hosted. Try creating a new todo.
+        🥳 App successfully hosted. Dialogues are managed in the admin console.
         <br />
         <a href="https://docs.amplify.aws/nextjs/start/quickstart/nextjs-app-router-client-components/">
           Review next steps of this tutorial.
