@@ -13,7 +13,7 @@ export const cclStorage = defineStorage({
             allow.resource(naatiProcessor).to(['read']),
         ],
         'naati-transcriptions/*': [
-            allow.resource(naatiProcessor).to(['read', 'write']), // merged pipeline + downstream scoring may read
+            allow.resource(naatiProcessor).to(['read', 'write']), // Whisper transcript.json per recording
         ],
     }),
     triggers: {

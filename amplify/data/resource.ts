@@ -50,7 +50,7 @@ const schema = a.schema({
     s3Key: a.string().required(),           // s3://naati-user-recordings/{userId}/{attemptId}.mp3
     status: a.enum([
       'UPLOADED',       // file in S3, not yet processed
-      'PROCESSING',     // Transcribe job running
+      'PROCESSING',     // OpenAI Whisper transcription in progress
       'SCORING',        // Claude scoring in progress
       'COMPLETED',      // feedback ready
       'FAILED',         // something went wrong
@@ -68,15 +68,15 @@ const schema = a.schema({
     ]),
 
   // ─── TRANSCRIPTION ──────────────────────────────────────
-  // AWS Transcribe output — one per recording
+  // Populated from S3 transcript JSON (OpenAI Whisper); one row per recording
   Transcription: a.model({
     recordingId: a.id().required(),
     userId: a.id().required(),
     dialogueId: a.id().required(),
-    rawText: a.string(),                    // full combined transcript as plain string
+    rawText: a.string(),                    // full transcript text
     segments: a.json(),                     // structured segment array (see below)
-    overallConfidence: a.float(),           // average confidence across all segments
-    transcribeJobId: a.string(),            // AWS Transcribe job ID for reference
+    overallConfidence: a.float(),           // optional; not set by Whisper path unless derived
+    transcribeJobId: a.string(),            // optional reference (e.g. S3 transcript key)
     recording: a.belongsTo('Recording', 'recordingId'),
   })
     .authorization(allow => [
@@ -84,24 +84,10 @@ const schema = a.schema({
       allow.group('admin'),
     ]),
 
-  // segments JSON shape:
+  // segments JSON shape (aligned with Whisper verbose segments in transcript.json):
   // [
-  //   {
-  //     segmentIndex: 1,
-  //     text: "I need to see a doctor about my shoulder",
-  //     language: "en-US",
-  //     startTime: 0.5,
-  //     endTime: 4.2,
-  //     confidence: 0.97
-  //   },
-  //   {
-  //     segmentIndex: 2,
-  //     text: "मलाई मेरो काँधको बारेमा डाक्टरसँग भेट्नु छ",
-  //     language: "ne-NP",
-  //     startTime: 5.1,
-  //     endTime: 9.8,
-  //     confidence: 0.84
-  //   }
+  //   { "start": 0.0, "end": 2.5, "text": "Hello" },
+  //   …
   // ]
 
   // ─── FEEDBACK ───────────────────────────────────────────
