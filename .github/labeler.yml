@@ -1,0 +1,13 @@
+# actions/labeler@v5+ syntax. Create labels in repo Settings → Labels if missing.
+
+amplify:
+  - changed-files:
+      - any-glob-to-any-file: amplify/**/*
+
+frontend:
+  - changed-files:
+      - any-glob-to-any-file: app/**/*
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file: .github/**/*
