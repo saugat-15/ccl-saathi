@@ -7,7 +7,10 @@ import { defineFunction } from '@aws-amplify/backend';
 export const naatiProcessor = defineFunction({
     name: 'naati-processor',
     entry: './handler.ts',
-    timeoutSeconds: 60,
+    timeoutSeconds: 120,
     memoryMB: 512,
     runtime: 20,
+    environment: {
+        TRANSCRIBE_OUTPUT_PREFIX: 'naati-transcriptions/',
+    },
 });

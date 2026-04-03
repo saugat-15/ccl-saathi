@@ -11,6 +11,9 @@
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^6.5.5",
+    "@aws-sdk/client-s3": "^3.1023.0",
+    "@aws-sdk/client-secrets-manager": "^3.1023.0",
+    "@aws-sdk/client-transcribe": "^3.1023.0",
     "aws-amplify": "^6.6.6",
     "next": "14.2.10",
     "react": "^18",

@@ -6,11 +6,14 @@ export const cclStorage = defineStorage({
     access: (allow) => ({
         'dialogues/*': [
             allow.authenticated.to(['read']), // authenticated users can read dialogues
-            allow.resource(naatiProcessor).to(['read']), // Lambda can read
+            allow.resource(naatiProcessor).to(['read']), // Lambda can read (reference transcripts)
         ],
         'recordings/{entity_id}/*': [
-            allow.entity('identity').to(['read', 'write', 'delete']), // user owns their recordings
-            allow.resource(naatiProcessor).to(['read', 'write']),     // Lambda can read + write transcripts back
+            allow.entity('identity').to(['read', 'write', 'delete']), // user owns their recordings (≈ naati-user-recordings/{cognitoId}/…)
+            allow.resource(naatiProcessor).to(['read']),
+        ],
+        'naati-transcriptions/*': [
+            allow.resource(naatiProcessor).to(['read', 'write']), // merged pipeline + downstream scoring may read
         ],
     }),
     triggers: {
