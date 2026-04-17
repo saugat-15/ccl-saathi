@@ -1,0 +1,210 @@
+{
+  "dialogueId": "education",
+  "domain": "Education",
+  "scenario": "This dialogue is an interview between a mother, and a school Principal, Ms Karen Black. The mother is seeking information on how to process her daughter’s enrolment at the school.",
+  "totalSegments": 12,
+  "createdAt": "2026-04-03T11:55:15.627Z",
+  "segments": [
+    {
+      "segmentIndex": 1,
+      "speaker": "EN",
+      "original": "Good afternoon. I am Karen Black, the Principal. Thank you for your interest in enrolling your daughter at our school.",
+      "translation": null,
+      "expectedInterpretation": "नमस्ते। म प्रधानाध्यापक करेन ब्ल्याक हुँ। हाम्रो विद्यालयमा तपाईंकी छोरीलाई भर्ना गर्न चासो देखाउनु भएकोमा धन्यवाद।",
+      "keyTerms": [
+        "Principal",
+        "enrolling",
+        "daughter",
+        "school"
+      ],
+      "wordCount": 20,
+      "startTime": 27,
+      "endTime": 34.361562,
+      "audioKey": "dialogues/education/segments/segment-1.mp3"
+    },
+    {
+      "segmentIndex": 2,
+      "speaker": "NE",
+      "original": "नम�े, िमस �ाक। यो अ�वा�ताको लािग धेरै ध�वाद। केिह मिहना अिघ मात्र हामी अ��ेिलया आएका हौँ र मेरी छोरीले चाँडै िबधालय सु� ग�न भ�े मेरो इ�ा छ।",
+      "translation": "Good afternoon, Ms Black. Thank you very much for this interview. We arrived in Australia a few months ago and I want my daughter to start school as soon as possible.",
+      "expectedInterpretation": "Good afternoon, Ms Black. Thank you very much for this interview. We arrived in Australia a few months ago and I want my daughter to start school as soon as possible.",
+      "keyTerms": [
+        "interview",
+        "Australia",
+        "daughter",
+        "school"
+      ],
+      "wordCount": 31,
+      "startTime": 38.990271,
+      "endTime": 51.397854,
+      "audioKey": "dialogues/education/segments/segment-2.mp3"
+    },
+    {
+      "segmentIndex": 3,
+      "speaker": "EN",
+      "original": "We can help you with the enrolment. Firstly, does your child have any health or medical conditions, such as allergies, that we need to be aware of?",
+      "translation": null,
+      "expectedInterpretation": "हामी तपाईंलाई भर्नामा मद्दत गर्न सक्छौं। पहिलो कुरा, के तपाईंको बच्चालाई कुनै स्वास्थ्य वा चिकित्सा अवस्था, जस्तै एलर्जी, छ जसको हामीलाई जानकारी हुन आवश्यक छ?",
+      "keyTerms": [
+        "enrolment",
+        "health",
+        "medical conditions",
+        "allergies"
+      ],
+      "wordCount": 27,
+      "startTime": 55.615521,
+      "endTime": 65.135542,
+      "audioKey": "dialogues/education/segments/segment-3.mp3"
+    },
+    {
+      "segmentIndex": 4,
+      "speaker": "NE",
+      "original": "छैन। मेरी छोरी �� िछन् र उमेर अनु�प चािहने खोप सबै पाएकी िछन्। उनी िनकै चलाख िछन् र केिह अंग्रेजी पिन बु�झ्छन्।",
+      "translation": "No. My daughter is healthy and has received all the vaccines for her age. She is very intelligent and already understands some English.",
+      "expectedInterpretation": "No. My daughter is healthy and has received all the vaccines for her age. She is very intelligent and already understands some English.",
+      "keyTerms": [
+        "healthy",
+        "vaccines",
+        "intelligent",
+        "English"
+      ],
+      "wordCount": 23,
+      "startTime": 70.123792,
+      "endTime": 80.396937,
+      "audioKey": "dialogues/education/segments/segment-4.mp3"
+    },
+    {
+      "segmentIndex": 5,
+      "speaker": "EN",
+      "original": "That is great! She will need to do a proficiency test in English to assess whether she may need language support.",
+      "translation": null,
+      "expectedInterpretation": "त्यो राम्रो छ! उनलाई भाषा सहयोगको आवश्यकता छ कि छैन भनेर मूल्याङ्कन गर्न अंग्रेजीमा दक्षता परीक्षण गर्न आवश्यक छ।",
+      "keyTerms": [
+        "proficiency test",
+        "English",
+        "language support"
+      ],
+      "wordCount": 21,
+      "startTime": 84.951354,
+      "endTime": 92.980146,
+      "audioKey": "dialogues/education/segments/segment-5.mp3"
+    },
+    {
+      "segmentIndex": 6,
+      "speaker": "NE",
+      "original": "उनी अझै राम्ररी ले� जा��नन्। परी�ा क�ो खालको �न्छ कु�ी? के उनले परी�ा राम्रो नगरे िबधालयले उनको भित� िलदैन? उनी अझै सानै िछन्।",
+      "translation": "She still can’t write well. What will the test be like? Would she not be accepted if she doesn’t perform well in English? She is still very young!",
+      "expectedInterpretation": "She still can’t write well. What will the test be like? Would she not be accepted if she doesn’t perform well in English? She is still very young!",
+      "keyTerms": [
+        "write",
+        "test",
+        "accepted",
+        "young"
+      ],
+      "wordCount": 28,
+      "startTime": 97.607458,
+      "endTime": 109.274583,
+      "audioKey": "dialogues/education/segments/segment-6.mp3"
+    },
+    {
+      "segmentIndex": 7,
+      "speaker": "EN",
+      "original": "Don’t worry. The test is suitable for her age. It will assess her understanding of English and basic literacy skills according to the year she will be enrolled in.",
+      "translation": null,
+      "expectedInterpretation": "चिन्ता नगर्नुहोस्। परीक्षण उनको उमेरको लागि उपयुक्त छ। यसले उनको अंग्रेजी बुझाइ र उनी भर्ना हुने वर्ष अनुसारको आधारभूत साक्षरता सीपको मूल्याङ्कन गर्नेछ।",
+      "keyTerms": [
+        "test",
+        "age",
+        "understanding",
+        "literacy skills"
+      ],
+      "wordCount": 29,
+      "startTime": 113.83025,
+      "endTime": 124.773167,
+      "audioKey": "dialogues/education/segments/segment-7.mp3"
+    },
+    {
+      "segmentIndex": 8,
+      "speaker": "NE",
+      "original": "भित�का लािग के-क�ा कागजातह� चािहन्छन् भिन म जा� चाहान्छु। उनका अ� क�ाह� नछुटुन भ�े मेरो इ�ा छ। उनी आफ्ना साथीह�भ�ा पिछ पिछ�न् िक भ�े मलाई डर छ।",
+      "translation": "I would also like to know what documents are necessary for her enrolment. I don’t want her to miss any more classes! I'm afraid she will lag behind her classmates.",
+      "expectedInterpretation": "I would also like to know what documents are necessary for her enrolment. I don’t want her to miss any more classes! I'm afraid she will lag behind her classmates.",
+      "keyTerms": [
+        "documents",
+        "enrolment",
+        "classes",
+        "classmates"
+      ],
+      "wordCount": 30,
+      "startTime": 129.359854,
+      "endTime": 143.101958,
+      "audioKey": "dialogues/education/segments/segment-8.mp3"
+    },
+    {
+      "segmentIndex": 9,
+      "speaker": "EN",
+      "original": "We need proof of residential address, such as a utility bill, as well as the child’s birth certificate and immunisation records. We will also need parents’ details, visa status and passport copies.",
+      "translation": null,
+      "expectedInterpretation": "हामीलाई आवासीय ठेगानाको प्रमाण, जस्तै युटिलिटी बिल, साथै बच्चाको जन्म प्रमाणपत्र र खोप अभिलेखहरू आवश्यक छ। हामीलाई अभिभावकहरूको विवरण, भिसा स्थिति र पासपोर्ट प्रतिलिपिहरू पनि आवश्यक छ।",
+      "keyTerms": [
+        "residential address",
+        "birth certificate",
+        "immunisation records",
+        "visa status",
+        "passport copies"
+      ],
+      "wordCount": 32,
+      "startTime": 147.6885,
+      "endTime": 163.147354,
+      "audioKey": "dialogues/education/segments/segment-9.mp3"
+    },
+    {
+      "segmentIndex": 10,
+      "speaker": "NE",
+      "original": "�न्छ। म ित कागजपत्र तयार गछु� र यही ह�ाको अ� स�मा �ाउछु । उनी िछटै िबधालय शु� गन� पाउने कुराले म खुसी छु।",
+      "translation": "Ok. I am going to organise those documents and I will bring them later this week. I'm very happy that she can start classes this semester.",
+      "expectedInterpretation": "Ok. I am going to organise those documents and I will bring them later this week. I'm very happy that she can start classes this semester.",
+      "keyTerms": [
+        "documents",
+        "organise",
+        "classes",
+        "semester"
+      ],
+      "wordCount": 26,
+      "startTime": 167.723271,
+      "endTime": 177.696042,
+      "audioKey": "dialogues/education/segments/segment-10.mp3"
+    },
+    {
+      "segmentIndex": 11,
+      "speaker": "EN",
+      "original": "Is there anything else that you would like to know? Please feel free to contact us if you think about anything else later.",
+      "translation": null,
+      "expectedInterpretation": "के तपाईंलाई अरू केहि थाहा पाउन चाहनुहुन्छ? यदि पछि केहि सोच्नुहुन्छ भने कृपया हामीलाई सम्पर्क गर्न नहिचकिचाउनुहोस्।",
+      "keyTerms": [
+        "contact",
+        "know",
+        "anything else"
+      ],
+      "wordCount": 23,
+      "startTime": 182.230437,
+      "endTime": 190.100979,
+      "audioKey": "dialogues/education/segments/segment-11.mp3"
+    },
+    {
+      "segmentIndex": 12,
+      "speaker": "NE",
+      "original": "छैन, अिहलेको लािग �ितनै। धेरै ध�वाद, िमस �ाक।",
+      "translation": "No, that's all for now. Thank you very much, Ms Black.",
+      "expectedInterpretation": "No, that's all for now. Thank you very much, Ms Black.",
+      "keyTerms": [
+        "thank you",
+        "all for now"
+      ],
+      "wordCount": 11,
+      "startTime": 194.697542,
+      "endTime": 198.849208,
+      "audioKey": "dialogues/education/segments/segment-12.mp3"
+    }
+  ]
+}

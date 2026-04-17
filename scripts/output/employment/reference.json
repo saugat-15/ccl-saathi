@@ -1,0 +1,249 @@
+{
+  "dialogueId": "employment",
+  "domain": "Employment",
+  "scenario": "This dialogue is an interview between Jack, a job search case manager, and a job seeker. The interview takes place in Jack’s office at JobActive.",
+  "totalSegments": 15,
+  "createdAt": "2026-04-03T11:49:56.109Z",
+  "segments": [
+    {
+      "segmentIndex": 1,
+      "speaker": "EN",
+      "original": "Hello, I’m Jack. Thank you for coming in.",
+      "translation": null,
+      "expectedInterpretation": "नमस्ते, म ज्याक हुँ। यहाँ आउनुभएकोमा धन्यवाद।",
+      "keyTerms": [
+        "interview",
+        "introduction",
+        "greeting"
+      ],
+      "wordCount": 8,
+      "startTime": 24.747833,
+      "endTime": 27.535542,
+      "audioKey": "dialogues/employment/segments/segment-1.mp3"
+    },
+    {
+      "segmentIndex": 2,
+      "speaker": "NE",
+      "original": "नम�े, �ाक। तपाईँलाई भेट्न पाउँदा खुसी ला�ो। अ��को पटक आउँदा मैले मौ�रनसँग कुरा गरेको िथएँ । उनी आज आएकी छैनन्?",
+      "translation": "Good morning Jack. Nice to meet you. Last time I spoke with Maureen. Isn’t she in today?",
+      "expectedInterpretation": "Good morning Jack. Nice to meet you. Last time I spoke with Maureen. Isn’t she in today?",
+      "keyTerms": [
+        "greeting",
+        "previous meeting",
+        "Maureen"
+      ],
+      "wordCount": 17,
+      "startTime": 33.862708,
+      "endTime": 42.549917,
+      "audioKey": "dialogues/employment/segments/segment-2.mp3"
+    },
+    {
+      "segmentIndex": 3,
+      "speaker": "EN",
+      "original": "She’s on holidays, but I have already looked at your file and just need to discuss a few things with you.",
+      "translation": null,
+      "expectedInterpretation": "उनी बिदामा छिन्, तर मैले तपाईंको फाइल पहिले नै हेरेको छु र तपाईंसँग केही कुराहरू छलफल गर्न आवश्यक छ।",
+      "keyTerms": [
+        "holidays",
+        "file review",
+        "discussion"
+      ],
+      "wordCount": 21,
+      "startTime": 48.839646,
+      "endTime": 55.377646,
+      "audioKey": "dialogues/employment/segments/segment-3.mp3"
+    },
+    {
+      "segmentIndex": 4,
+      "speaker": "NE",
+      "original": "�न्छ। तपाई के िवषयमा कुरा गन� चाहानु�न्छ ? जािगर नभएकोले म झनै िच��त भइरहेको छु । ह�ाको दुई िदन जानु पन� अंग्रेजी क�ाले पिन काम खो�े मौका कम ग�रिदएको छ।",
+      "translation": "OK. What needs to be discussed? I’m getting more worried about not having a job. And English classes twice a week doesn’t give me a chance to properly look for work.",
+      "expectedInterpretation": "OK. What needs to be discussed? I’m getting more worried about not having a job. And English classes twice a week doesn’t give me a chance to properly look for work.",
+      "keyTerms": [
+        "job concern",
+        "English classes",
+        "discussion"
+      ],
+      "wordCount": 31,
+      "startTime": 61.642979,
+      "endTime": 74.341813,
+      "audioKey": "dialogues/employment/segments/segment-4.mp3"
+    },
+    {
+      "segmentIndex": 5,
+      "speaker": "EN",
+      "original": "I understand. However, you need to look for 10 jobs a month to continue receiving Centrelink payments. Our network connects job seekers with employers, and we’ll try to help you.",
+      "translation": null,
+      "expectedInterpretation": "म बुझ्छु। यद्यपि, तपाईंले सेन्टरलिंक भुक्तानीहरू प्राप्त गर्न जारी राख्नको लागि महिनामा १० वटा जागिरहरू खोज्न आवश्यक छ। हाम्रो नेटवर्कले रोजगार खोज्नेहरूलाई रोजगारदाताहरूसँग जोड्छ, र हामी तपाईंलाई मद्दत गर्ने प्रयास गर्नेछौं।",
+      "keyTerms": [
+        "Centrelink",
+        "job search",
+        "network"
+      ],
+      "wordCount": 30,
+      "startTime": 80.551958,
+      "endTime": 92.858458,
+      "audioKey": "dialogues/employment/segments/segment-5.mp3"
+    },
+    {
+      "segmentIndex": 6,
+      "speaker": "NE",
+      "original": "ईनटरनेटमा मैले कामको खोजी गन� थािलसकेको छु। तर मैले आफ्नो पेशामा काम गन�लाई अंग्रेजी राम्रोसँग बोल्न आव�क �न्छ।",
+      "translation": "I’ve already looked for jobs online. But to continue in my profession, I need to speak English better.",
+      "expectedInterpretation": "I’ve already looked for jobs online. But to continue in my profession, I need to speak English better.",
+      "keyTerms": [
+        "online job search",
+        "English proficiency",
+        "profession"
+      ],
+      "wordCount": 18,
+      "startTime": 99.144042,
+      "endTime": 107.217146,
+      "audioKey": "dialogues/employment/segments/segment-6.mp3"
+    },
+    {
+      "segmentIndex": 7,
+      "speaker": "EN",
+      "original": "What work did you do before coming to Australia?",
+      "translation": null,
+      "expectedInterpretation": "अस्ट्रेलिया आउनु अघि तपाईले के काम गर्नुहुन्थ्यो?",
+      "keyTerms": [
+        "previous work",
+        "Australia",
+        "employment history"
+      ],
+      "wordCount": 9,
+      "startTime": 113.437625,
+      "endTime": 116.350542,
+      "audioKey": "dialogues/employment/segments/segment-7.mp3"
+    },
+    {
+      "segmentIndex": 8,
+      "speaker": "NE",
+      "original": "म कम्�ुटर प्र ािविधकको �पमा काम गथ� र मेरो िज�ामा प्र णाली �ायवस्थापन र प्रोग्रािम�को संचालन रहेको िथयो।",
+      "translation": "I worked as a computer technician and was responsible for systems administration and programming.",
+      "expectedInterpretation": "I worked as a computer technician and was responsible for systems administration and programming.",
+      "keyTerms": [
+        "computer technician",
+        "systems administration",
+        "programming"
+      ],
+      "wordCount": 14,
+      "startTime": 122.631062,
+      "endTime": 130.107,
+      "audioKey": "dialogues/employment/segments/segment-8.mp3"
+    },
+    {
+      "segmentIndex": 9,
+      "speaker": "EN",
+      "original": "You should try other areas until you’re stronger in English. Your previous experience may be useful. Some companies offer training in areas where you may not need 100% English fluency.",
+      "translation": null,
+      "expectedInterpretation": "तपाईंले अंग्रेजीमा बलियो नभएसम्म अन्य क्षेत्रहरू प्रयास गर्नुपर्छ। तपाईंको अघिल्लो अनुभव उपयोगी हुन सक्छ। केही कम्पनीहरूले तपाईंलाई १००% अंग्रेजी दक्षता आवश्यक नपर्ने क्षेत्रहरूमा तालिम प्रदान गर्छन्।",
+      "keyTerms": [
+        "English fluency",
+        "previous experience",
+        "training"
+      ],
+      "wordCount": 32,
+      "startTime": 136.337833,
+      "endTime": 149.540812,
+      "audioKey": "dialogues/employment/segments/segment-9.mp3"
+    },
+    {
+      "segmentIndex": 10,
+      "speaker": "NE",
+      "original": "आइ टी.का संस्था ह� संग कामका लािग मेरो अ�वा�ता� तपाईले िमलाउन स�ु भएमा �ो उ�म �ने िथयो। कम्�ुटर �ेत्रमा रहेको मेरो पेशालाई जारी रा�े मैले मौका पाउँथे।",
+      "translation": "It would be fantastic if you could arrange interviews with IT organisations. I’d have the opportunity to continue in the field of computing.",
+      "expectedInterpretation": "It would be fantastic if you could arrange interviews with IT organisations. I’d have the opportunity to continue in the field of computing.",
+      "keyTerms": [
+        "IT organisations",
+        "interviews",
+        "computing field"
+      ],
+      "wordCount": 23,
+      "startTime": 155.798167,
+      "endTime": 167.2425,
+      "audioKey": "dialogues/employment/segments/segment-10.mp3"
+    },
+    {
+      "segmentIndex": 11,
+      "speaker": "EN",
+      "original": "We’ll see. You must prepare a résumé. We can help you write one.",
+      "translation": null,
+      "expectedInterpretation": "हामी हेर्नेछौं। तपाईंले एक रिजुमे तयार गर्नुपर्छ। हामी तपाईंलाई लेख्न मद्दत गर्न सक्छौं।",
+      "keyTerms": [
+        "résumé",
+        "preparation",
+        "assistance"
+      ],
+      "wordCount": 13,
+      "startTime": 173.485542,
+      "endTime": 178.453292,
+      "audioKey": "dialogues/employment/segments/segment-11.mp3"
+    },
+    {
+      "segmentIndex": 12,
+      "speaker": "NE",
+      "original": "ध�वाद। के तपाईं मलाई जािगर खो�े सेवा र ई�रनेटमा काम खो�े कुरामा सहयोग गन� स�ु �न्छ ?",
+      "translation": "Thank you. Can you also help me use the Job Services and the online job listing?",
+      "expectedInterpretation": "Thank you. Can you also help me use the Job Services and the online job listing?",
+      "keyTerms": [
+        "Job Services",
+        "online job listing",
+        "assistance"
+      ],
+      "wordCount": 16,
+      "startTime": 184.748542,
+      "endTime": 191.478458,
+      "audioKey": "dialogues/employment/segments/segment-12.mp3"
+    },
+    {
+      "segmentIndex": 13,
+      "speaker": "EN",
+      "original": "Definitely. You can also use the job search tools in the Centrelink computers. We’ll schedule another interview for next week and finalise the finer points.",
+      "translation": null,
+      "expectedInterpretation": "पक्कै पनि। तपाईं सेन्टरलिंक कम्प्युटरहरूमा रोजगार खोज उपकरणहरू पनि प्रयोग गर्न सक्नुहुन्छ। हामी अर्को हप्ता अर्को अन्तर्वार्ता तालिका बनाउनेछौं र सूक्ष्म बुँदाहरूलाई अन्तिम रूप दिनेछौं।",
+      "keyTerms": [
+        "job search tools",
+        "Centrelink",
+        "interview scheduling"
+      ],
+      "wordCount": 25,
+      "startTime": 197.820396,
+      "endTime": 209.130292,
+      "audioKey": "dialogues/employment/segments/segment-13.mp3"
+    },
+    {
+      "segmentIndex": 14,
+      "speaker": "NE",
+      "original": "म झनै आशावादी र सकार�क भएको छु। मेरो पिहलो अ�वा�ता�को लािग नयाँ किमज खो�े छु। अिहले क�ामा पु� मलाई िढलो भईस�ो, म लाग्छु। हस् त।",
+      "translation": "I’m more hopeful and more optimistic. I’ll even look for a new shirt for the first interview! I need to run now not to be late for my class. Bye!",
+      "expectedInterpretation": "I’m more hopeful and more optimistic. I’ll even look for a new shirt for the first interview! I need to run now not to be late for my class. Bye!",
+      "keyTerms": [
+        "hopeful",
+        "optimistic",
+        "interview preparation"
+      ],
+      "wordCount": 30,
+      "startTime": 215.572854,
+      "endTime": 226.03425,
+      "audioKey": "dialogues/employment/segments/segment-14.mp3"
+    },
+    {
+      "segmentIndex": 15,
+      "speaker": "EN",
+      "original": "We’ll select available jobs and next time we may have good news and you’ll be able to wear your new shirt. Bye!",
+      "translation": null,
+      "expectedInterpretation": "हामी उपलब्ध जागिरहरू चयन गर्नेछौं र अर्को पटक हामीसँग राम्रो समाचार हुन सक्छ र तपाईंले आफ्नो नयाँ शर्ट लगाउन सक्नुहुनेछ। बाई!",
+      "keyTerms": [
+        "available jobs",
+        "good news",
+        "new shirt"
+      ],
+      "wordCount": 22,
+      "startTime": 232.319146,
+      "endTime": 240.565187,
+      "audioKey": "dialogues/employment/segments/segment-15.mp3"
+    }
+  ]
+}
