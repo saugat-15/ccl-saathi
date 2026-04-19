@@ -1,62 +1,185 @@
-:root {
-  --max-width: 1100px;
-  --border-radius: 12px;
-  --font-mono: ui-monospace, Menlo, Monaco, 'Cascadia Mono', 'Segoe UI Mono',
-    'Roboto Mono', 'Oxygen Mono', 'Ubuntu Monospace', 'Source Code Pro',
-    'Fira Mono', 'Droid Sans Mono', 'Courier New', monospace;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: #CBBEFF;
-  --background-end-rgb: 255, 255, 255;
-
-  --callout-rgb: 238, 240, 241;
-  --callout-border-rgb: 172, 175, 176;
-  --card-rgb: #6649AE;
-  --card-border-rgb: 131, 134, 135;
-}
-
-@media (prefers-color-scheme: dark) {
+/* ── shadcn/ui CSS variables (light forest-green theme) ─────────────────── */
+@layer base {
   :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+    --background:   0 0% 100%;
+    --foreground:   150 20% 10%;
 
-    --callout-rgb: 20, 20, 20;
-    --callout-border-rgb: 108, 108, 108;
-    --card-rgb: 100, 100, 100;
-    --card-border-rgb: 200, 200, 200;
+    --card:         0 0% 100%;
+    --card-foreground: 150 20% 10%;
+
+    --popover:      0 0% 100%;
+    --popover-foreground: 150 20% 10%;
+
+    /* Forest green primary */
+    --primary:      150 35% 35%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary:    140 18% 94%;
+    --secondary-foreground: 150 25% 20%;
+
+    --muted:        140 15% 95%;
+    --muted-foreground: 150 12% 45%;
+
+    --accent:       140 18% 92%;
+    --accent-foreground: 150 30% 25%;
+
+    --destructive:  0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border:       140 18% 88%;
+    --input:        140 18% 88%;
+    --ring:         150 35% 35%;
+
+    --radius: 0.625rem;
   }
 }
 
-* {
-  box-sizing: border-box;
+@layer base {
+  * { box-sizing: border-box; padding: 0; margin: 0; }
+
+  html, body {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: inherit; text-decoration: none; }
+}
+
+/* ── Keyframes ─────────────────────────────────────────────────────────── */
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  70%  { box-shadow: 0 0 0 12px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes recording-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+
+/* ── Record button ─────────────────────────────────────────────────────── */
+.record-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  background: none;
+  border: none;
   padding: 0;
-  margin: 0;
 }
 
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
+.record-btn__circle {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2px solid hsl(var(--border));
+  background: hsl(var(--muted));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s, background 0.15s;
+  font-size: 1.2rem;
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+.record-btn:hover:not(:disabled) .record-btn__circle {
+  border-color: hsl(var(--ring));
+  background: hsl(var(--secondary));
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+.record-btn--recording .record-btn__circle {
+  background: #EF4444;
+  border-color: #EF4444;
+  animation: pulse-ring 1.4s ease-out infinite;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+.record-btn__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: hsl(var(--muted-foreground));
+  text-transform: uppercase;
 }
+
+.record-btn--recording .record-btn__label { color: #EF4444; }
+
+.recording-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #EF4444;
+  animation: recording-dot 1s ease-in-out infinite;
+  margin-right: 4px;
+}
+
+/* ── Audio range ───────────────────────────────────────────────────────── */
+.audio-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 3px;
+  border-radius: 2px;
+  background: hsl(var(--border));
+  cursor: pointer;
+  outline: none;
+}
+.audio-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: hsl(var(--primary));
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.audio-range:hover::-webkit-slider-thumb { transform: scale(1.2); }
+.audio-range::-moz-range-thumb {
+  width: 13px;
+  height: 13px;
+  border: none;
+  border-radius: 50%;
+  background: hsl(var(--primary));
+  cursor: pointer;
+}
+.audio-range::-moz-range-track { background: hsl(var(--border)); height: 3px; border-radius: 2px; }
+
+/* ── Amplify Authenticator theming ─────────────────────────────────────── */
+[data-amplify-authenticator] {
+  --amplify-colors-background-primary: hsl(var(--background));
+  --amplify-colors-background-secondary: hsl(var(--muted));
+  --amplify-colors-brand-primary-10:  #e6f2eb;
+  --amplify-colors-brand-primary-20:  #c2dece;
+  --amplify-colors-brand-primary-40:  #7dba98;
+  --amplify-colors-brand-primary-60:  #4a9468;
+  --amplify-colors-brand-primary-80:  #3B7A54;
+  --amplify-colors-brand-primary-90:  #2D6444;
+  --amplify-colors-brand-primary-100: #1e4a30;
+  --amplify-colors-border-primary: hsl(var(--border));
+  --amplify-colors-font-primary: hsl(var(--foreground));
+  --amplify-colors-font-secondary: hsl(var(--muted-foreground));
+  --amplify-radii-small: var(--radius);
+  --amplify-radii-medium: var(--radius);
+  --amplify-radii-large: var(--radius);
+}
+
+/* ── Utilities ─────────────────────────────────────────────────────────── */
+.fade-in { animation: fade-in 0.2s ease both; }
