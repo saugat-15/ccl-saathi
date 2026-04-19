@@ -8,9 +8,17 @@ export default function HomePage() {
   const { authStatus } = useAuthenticator();
   const isAuthenticated = authStatus === "authenticated";
 
+  if (isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background">
+        <CategoryPracticeGrid />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
-      <MarketingSections isAuthenticated={isAuthenticated} />
+      <MarketingSections isAuthenticated={false} />
       <CategoryPracticeGrid />
     </div>
   );

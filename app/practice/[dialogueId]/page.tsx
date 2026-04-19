@@ -8,9 +8,7 @@ import { getCurrentUser, fetchAuthSession } from "aws-amplify/auth";
 import type { Schema } from "@/amplify/data/resource";
 import AudioRecorder from "@/app/components/AudioRecorder";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 import { markDialogueCompleted, notifyProgressUpdated } from "@/lib/progress";
 import { ChevronLeft, Headphones, LayoutList, Play, Pause, Loader2, CheckCircle2, Lock } from "lucide-react";
 
@@ -71,7 +69,9 @@ function AudioPlayer({ audioUrl }: { audioUrl: string }) {
   }
 
   return (
-    <div className="flex items-center gap-3 bg-secondary/60 border border-border rounded-lg px-3 py-2.5">
+    <div style={{ display: "flex", alignItems: "center", gap: 12,
+      background: "var(--gg-50)", border: "1px solid var(--gg-200)",
+      borderRadius: 10, padding: "10px 14px" }}>
       <audio
         ref={audioRef}
         src={audioUrl}
@@ -83,11 +83,15 @@ function AudioPlayer({ audioUrl }: { audioUrl: string }) {
       <button
         type="button"
         onClick={isPlaying ? handlePause : handlePlay}
-        className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 hover:bg-primary/90 transition-colors"
+        style={{ width: 34, height: 34, borderRadius: "50%",
+          background: "var(--forest-500)", border: "none",
+          cursor: "pointer", flexShrink: 0,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: "var(--shadow-brand)" }}
       >
         {isPlaying
-          ? <Pause className="h-3.5 w-3.5 text-white fill-white" />
-          : <Play className="h-3.5 w-3.5 text-white fill-white ml-0.5" />
+          ? <Pause className="h-3 w-3 text-white fill-white" />
+          : <Play className="h-3 w-3 text-white fill-white ml-0.5" />
         }
       </button>
       <input
@@ -95,7 +99,8 @@ function AudioPlayer({ audioUrl }: { audioUrl: string }) {
         onChange={handleSeek}
         className="audio-range flex-1 min-w-0"
       />
-      <span className="text-xs text-muted-foreground tabular-nums flex-shrink-0">
+      <span style={{ fontFamily: "var(--font-mono)", fontSize: 12,
+        color: "var(--fg-muted)", flexShrink: 0 }}>
         {fmt(currentTime)} / {duration > 0 ? fmt(duration) : "--:--"}
       </span>
     </div>
@@ -235,14 +240,37 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
   // ── Success screen ────────────────────────────────────────────────────────
   if (submitDone) return (
     <div className="min-h-screen bg-background flex items-center justify-center px-5">
-      <Card className="w-full max-w-sm text-center p-8">
-        <CheckCircle2 className="h-12 w-12 text-primary mx-auto mb-4" />
-        <h2 className="text-lg font-bold text-foreground mb-1">Submitted!</h2>
-        <p className="text-sm text-muted-foreground mb-6">We&apos;ll process your recordings shortly.</p>
-        <Button onClick={() => router.push(`/category/${category}`)} className="w-full">
+      <div style={{
+        background: "#fff", border: "1px solid var(--gg-200)",
+        borderRadius: 18, padding: "40px 32px",
+        width: "100%", maxWidth: 400, textAlign: "center",
+        boxShadow: "var(--shadow-md)",
+      }}>
+        <div style={{
+          width: 56, height: 56, borderRadius: "50%",
+          background: "var(--forest-50)", border: "2px solid var(--forest-200)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          margin: "0 auto 16px",
+        }}>
+          <CheckCircle2 style={{ width: 28, height: 28, color: "var(--forest-500)" }} />
+        </div>
+        <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600,
+          color: "var(--fg-strong)", margin: "0 0 8px" }}>Submitted!</h2>
+        <p style={{ fontSize: 14, color: "var(--fg-muted)", margin: "0 0 24px", lineHeight: 1.5 }}>
+          We&apos;ll process your recordings shortly.
+        </p>
+        <button
+          onClick={() => router.push(`/category/${category}`)}
+          style={{
+            width: "100%", padding: "11px 20px", borderRadius: 10,
+            background: "var(--forest-500)", border: "none", color: "#fff",
+            fontFamily: "var(--font-sans)", fontSize: 14, fontWeight: 600,
+            cursor: "pointer", boxShadow: "var(--shadow-brand)",
+          }}
+        >
           Back to {toLabel(category)}
-        </Button>
-      </Card>
+        </button>
+      </div>
     </div>
   );
 
@@ -260,46 +288,68 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
         </Button>
 
         <div className="mb-6">
-          <h1 className="text-xl font-bold tracking-tight text-foreground">Choose Practice Mode</h1>
-          <p className="text-sm text-muted-foreground mt-1">How would you like to practise this dialogue?</p>
+          <span style={{
+            fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase",
+            fontWeight: 700, color: "var(--amber-700)", background: "var(--amber-50)",
+            padding: "4px 8px", borderRadius: 4,
+          }}>
+            {toLabel(category).toUpperCase()}
+          </span>
+          <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600,
+            color: "var(--fg-strong)", margin: "12px 0 4px", lineHeight: 1.2 }}>
+            Choose practice mode
+          </h1>
+          <p style={{ fontSize: 14, color: "var(--fg-muted)", margin: 0 }}>
+            How would you like to practise this dialogue?
+          </p>
         </div>
 
-        <Separator className="mb-5" />
+        <Separator className="mb-6" />
 
-        <div className="space-y-3">
-          <Card
-            onClick={() => setMode("full")}
-            className="cursor-pointer hover:border-primary/40 hover:bg-accent/40 transition-colors"
-          >
-            <CardContent className="flex items-start gap-4 pt-5">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Headphones className="h-5 w-5 text-primary" />
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {[
+            { key: "full" as Mode, icon: Headphones, title: "Full Dialogue",
+              desc: "Listen to the complete dialogue and record your interpretation in one go." },
+            { key: "segments" as Mode, icon: LayoutList, title: "By Segments",
+              desc: "Work through each segment one at a time, listening and recording in order." },
+          ].map(({ key, icon: Icon, title, desc }) => (
+            <div
+              key={key}
+              onClick={() => setMode(key)}
+              style={{
+                background: "#fff", border: "1px solid var(--gg-200)",
+                borderRadius: 14, padding: "18px 20px",
+                cursor: "pointer", display: "flex", alignItems: "flex-start", gap: 16,
+                transition: "all 0.2s cubic-bezier(0.22,1,0.36,1)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = "var(--forest-300)";
+                e.currentTarget.style.boxShadow = "var(--shadow-md)";
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "var(--gg-200)";
+                e.currentTarget.style.boxShadow = "none";
+                e.currentTarget.style.transform = "none";
+              }}
+            >
+              <div style={{
+                width: 42, height: 42, borderRadius: 10,
+                background: "var(--forest-50)", border: "1px solid var(--forest-100)",
+                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+              }}>
+                <Icon style={{ width: 20, height: 20, color: "var(--forest-500)" }} />
               </div>
               <div>
-                <p className="font-semibold text-sm text-foreground mb-0.5">Full Dialogue</p>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Listen to the complete dialogue and record your interpretation in one go.
+                <p style={{ fontWeight: 600, fontSize: 15, color: "var(--fg-strong)", margin: "0 0 4px" }}>
+                  {title}
+                </p>
+                <p style={{ fontSize: 13, color: "var(--fg-muted)", margin: 0, lineHeight: 1.45 }}>
+                  {desc}
                 </p>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card
-            onClick={() => setMode("segments")}
-            className="cursor-pointer hover:border-primary/40 hover:bg-accent/40 transition-colors"
-          >
-            <CardContent className="flex items-start gap-4 pt-5">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <LayoutList className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-semibold text-sm text-foreground mb-0.5">By Segments</p>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Work through each segment one at a time, listening and recording in order.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -341,50 +391,81 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
         </Button>
 
         <div className="mb-6">
-          <h1 className="text-xl font-bold tracking-tight text-foreground">Full Dialogue</h1>
-          <p className="text-sm text-muted-foreground mt-1">Listen to the full dialogue, then record your interpretation.</p>
+          <span style={{
+            fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase",
+            fontWeight: 700, color: "var(--amber-700)", background: "var(--amber-50)",
+            padding: "4px 8px", borderRadius: 4,
+          }}>
+            {toLabel(category).toUpperCase()}
+          </span>
+          <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600,
+            color: "var(--fg-strong)", margin: "12px 0 4px", lineHeight: 1.2 }}>
+            Full Dialogue
+          </h1>
+          <p style={{ fontSize: 14, color: "var(--fg-muted)", margin: 0 }}>
+            Listen to the full dialogue, then record your interpretation.
+          </p>
         </div>
 
-        <Separator className="mb-5" />
+        <Separator className="mb-6" />
 
-        <div className="space-y-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Reference Audio</p>
-            </CardHeader>
-            <CardContent className="pt-0">
-              {fullAudioUrl
-                ? <AudioPlayer audioUrl={fullAudioUrl} />
-                : <p className="text-sm text-muted-foreground">Audio unavailable.</p>
-              }
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-5">
-              <AudioRecorder
-                onRecordingComplete={handleFullRecorded}
-                onReRecordStart={handleFullReRecord}
-                isDisabled={isSubmitting}
-              />
-            </CardContent>
-          </Card>
+        {/* Player card */}
+        <div style={{
+          background: "#fff", border: "1px solid var(--gg-200)",
+          borderRadius: 16, overflow: "hidden",
+          boxShadow: "var(--shadow-sm)", marginBottom: 16,
+        }}>
+          <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--gg-100)" }}>
+            <p style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase",
+              fontWeight: 700, color: "var(--fg-muted)", margin: 0 }}>Reference Audio</p>
+          </div>
+          <div style={{ padding: "16px 20px", background: "var(--gg-50)" }}>
+            {fullAudioUrl
+              ? <AudioPlayer audioUrl={fullAudioUrl} />
+              : <p style={{ fontSize: 13, color: "var(--fg-muted)", margin: 0 }}>Audio unavailable.</p>
+            }
+          </div>
         </div>
 
-        <Separator className="my-5" />
+        {/* Recorder card */}
+        <div style={{
+          background: "#fff", border: "1px solid var(--gg-200)",
+          borderRadius: 16, overflow: "hidden",
+          boxShadow: "var(--shadow-sm)", marginBottom: 24,
+        }}>
+          <div style={{ padding: "16px 20px 20px" }}>
+            <AudioRecorder
+              onRecordingComplete={handleFullRecorded}
+              onReRecordStart={handleFullReRecord}
+              isDisabled={isSubmitting}
+            />
+          </div>
+        </div>
 
         {submitError && (
-          <p className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-4 py-3 mb-4">
+          <p style={{ fontSize: 13, color: "var(--danger)", background: "var(--danger-soft)",
+            border: "1px solid rgba(220,38,38,0.2)", borderRadius: 8,
+            padding: "10px 14px", marginBottom: 16 }}>
             {submitError}
           </p>
         )}
-        <Button
+        <button
           onClick={() => handleSubmit([fullRecording])}
           disabled={!fullRecording.recorded || isSubmitting}
-          className="w-full sm:w-auto"
+          style={{
+            padding: "11px 28px", borderRadius: 10,
+            background: fullRecording.recorded && !isSubmitting ? "var(--forest-500)" : "var(--gg-200)",
+            border: "none",
+            color: fullRecording.recorded && !isSubmitting ? "#fff" : "var(--fg-muted)",
+            fontFamily: "var(--font-sans)", fontSize: 14, fontWeight: 600,
+            cursor: fullRecording.recorded && !isSubmitting ? "pointer" : "not-allowed",
+            boxShadow: fullRecording.recorded && !isSubmitting ? "var(--shadow-brand)" : "none",
+            transition: "all 0.15s",
+            display: "flex", alignItems: "center", gap: 8,
+          }}
         >
-          {isSubmitting ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Submitting…</> : "Submit Recording"}
-        </Button>
+          {isSubmitting ? <><Loader2 className="h-4 w-4 animate-spin" />Submitting…</> : "Submit Recording"}
+        </button>
       </div>
     </div>
   );
@@ -392,7 +473,6 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
   // ── Segments mode ─────────────────────────────────────────────────────────
   const allRecorded = segmentStates.length > 0 && segmentStates.every((s) => s.recorded);
   const completedCount = segmentStates.filter((s) => s.recorded).length;
-  const pct = segmentStates.length > 0 ? (completedCount / segmentStates.length) * 100 : 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -402,70 +482,119 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
         </Button>
 
         <div className="mb-5">
-          <h1 className="text-xl font-bold tracking-tight text-foreground">By Segments</h1>
-          <p className="text-sm text-muted-foreground mt-1">Record your interpretation for each segment in order.</p>
+          <span style={{
+            fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase",
+            fontWeight: 700, color: "var(--amber-700)", background: "var(--amber-50)",
+            padding: "4px 8px", borderRadius: 4,
+          }}>
+            {toLabel(category).toUpperCase()}
+          </span>
+          <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600,
+            color: "var(--fg-strong)", margin: "12px 0 4px", lineHeight: 1.2 }}>
+            By Segments
+          </h1>
+          <p style={{ fontSize: 14, color: "var(--fg-muted)", margin: 0 }}>
+            Record your interpretation for each segment in order.
+          </p>
         </div>
 
-        {/* Progress */}
-        <div className="mb-6 space-y-1.5">
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{completedCount} of {segmentStates.length} recorded</span>
-            <span>{Math.round(pct)}%</span>
-          </div>
-          <div className="h-1.5 bg-border rounded-full overflow-hidden">
+        {/* Segment progress dots */}
+        <div style={{ display: "flex", gap: 4, marginBottom: 20, flexWrap: "wrap", alignItems: "center" }}>
+          {segmentStates.map((seg, i) => (
             <div
-              className="h-full bg-primary rounded-full transition-all duration-300"
-              style={{ width: `${pct}%` }}
+              key={i}
+              style={{
+                height: 6, flex: "1 1 24px", minWidth: 20, maxWidth: 48,
+                borderRadius: 3,
+                background: seg.recorded
+                  ? "var(--forest-500)"
+                  : i <= currentIndex
+                    ? "var(--forest-200)"
+                    : "var(--gg-200)",
+                transition: "background 0.2s",
+              }}
             />
-          </div>
+          ))}
+          <span style={{ fontSize: 12, color: "var(--fg-muted)",
+            fontFamily: "var(--font-mono)", marginLeft: 8, flexShrink: 0 }}>
+            {completedCount}/{segmentStates.length}
+          </span>
         </div>
 
         <Separator className="mb-5" />
 
-        <div className="space-y-3">
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {segmentStates.map((seg, i) => {
             const segAudioUrl = segmentAudioUrls[i];
             const isUnlocked = i <= currentIndex;
             const isDone = seg.recorded;
 
             return (
-              <Card
+              <div
                 key={i}
-                className={`overflow-hidden transition-opacity ${isUnlocked ? "" : "opacity-50"} ${isDone ? "border-primary/30" : ""}`}
+                style={{
+                  background: "#fff",
+                  border: `1px solid ${isDone ? "var(--forest-200)" : "var(--gg-200)"}`,
+                  borderRadius: 14, overflow: "hidden",
+                  opacity: isUnlocked ? 1 : 0.55,
+                  boxShadow: isDone ? "0 0 0 1px var(--forest-100)" : "none",
+                  transition: "opacity 0.2s, border-color 0.2s",
+                }}
               >
                 {/* Segment header */}
-                <div className={`flex items-center justify-between px-5 py-2.5 border-b ${isDone ? "bg-primary/5 border-primary/20" : "bg-muted/40"}`}>
-                  <div className="flex items-center gap-2">
-                    {isDone
-                      ? <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
-                      : !isUnlocked
-                        ? <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-                        : null
-                    }
-                    <span className={`text-xs font-semibold uppercase tracking-wider ${isDone ? "text-primary" : isUnlocked ? "text-foreground" : "text-muted-foreground"}`}>
+                <div style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "10px 18px",
+                  background: isDone ? "var(--forest-50)" : "var(--gg-50)",
+                  borderBottom: `1px solid ${isDone ? "var(--forest-100)" : "var(--gg-200)"}`,
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {isDone ? (
+                      <CheckCircle2 style={{ width: 14, height: 14, color: "var(--forest-500)" }} />
+                    ) : !isUnlocked ? (
+                      <Lock style={{ width: 14, height: 14, color: "var(--fg-muted)" }} />
+                    ) : null}
+                    <span style={{
+                      fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase",
+                      fontWeight: 700,
+                      color: isDone ? "var(--forest-600)" : isUnlocked ? "var(--fg-strong)" : "var(--fg-muted)",
+                    }}>
                       Segment {i + 1}
                     </span>
                   </div>
-                  {isDone && <Badge variant="success" className="text-xs">Recorded</Badge>}
+                  {isDone && (
+                    <span style={{
+                      fontSize: 11, fontWeight: 600, color: "var(--forest-600)",
+                      background: "var(--forest-50)", border: "1px solid var(--forest-200)",
+                      padding: "2px 8px", borderRadius: 20,
+                    }}>
+                      Recorded
+                    </span>
+                  )}
                   {!isUnlocked && !isDone && (
-                    <span className="text-xs text-muted-foreground">Complete segment {i} first</span>
+                    <span style={{ fontSize: 11, color: "var(--fg-muted)" }}>
+                      Complete segment {i} first
+                    </span>
                   )}
                 </div>
 
                 {/* Segment body */}
-                <CardContent className="pt-4 space-y-4">
+                <div style={{ padding: "16px 18px 18px", display: "flex", flexDirection: "column", gap: 16 }}>
                   {segAudioUrl ? (
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2">Listen</p>
+                      <p style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase",
+                        fontWeight: 700, color: "var(--fg-muted)", margin: "0 0 8px" }}>Listen</p>
                       <AudioPlayer audioUrl={segAudioUrl} />
                     </div>
                   ) : (
-                    <p className="text-xs text-muted-foreground">Audio unavailable.</p>
+                    <p style={{ fontSize: 13, color: "var(--fg-muted)", margin: 0 }}>Audio unavailable.</p>
                   )}
 
                   <div style={{ pointerEvents: isUnlocked ? "auto" : "none" }}>
                     {!isUnlocked && (
-                      <p className="text-xs text-muted-foreground mb-2">Locked until previous segment is recorded.</p>
+                      <p style={{ fontSize: 12, color: "var(--fg-muted)", margin: "0 0 8px" }}>
+                        Locked until previous segment is recorded.
+                      </p>
                     )}
                     <AudioRecorder
                       key={`recorder-${i}-${isUnlocked}`}
@@ -474,8 +603,8 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
                       isDisabled={!isUnlocked || isSubmitting}
                     />
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             );
           })}
         </div>
@@ -483,20 +612,36 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
         <Separator className="my-6" />
 
         {submitError && (
-          <p className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-4 py-3 mb-4">
+          <p style={{ fontSize: 13, color: "var(--danger)", background: "var(--danger-soft)",
+            border: "1px solid rgba(220,38,38,0.2)", borderRadius: 8,
+            padding: "10px 14px", marginBottom: 16 }}>
             {submitError}
           </p>
         )}
-        <Button
-          onClick={() => handleSubmit(segmentStates)}
-          disabled={!allRecorded || isSubmitting}
-          className="w-full sm:w-auto"
-        >
-          {isSubmitting ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Submitting…</> : "Submit All Recordings"}
-        </Button>
-        {!allRecorded && (
-          <p className="text-xs text-muted-foreground mt-2">Complete all segments to submit.</p>
-        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <button
+            onClick={() => handleSubmit(segmentStates)}
+            disabled={!allRecorded || isSubmitting}
+            style={{
+              padding: "11px 28px", borderRadius: 10,
+              background: allRecorded && !isSubmitting ? "var(--forest-500)" : "var(--gg-200)",
+              border: "none",
+              color: allRecorded && !isSubmitting ? "#fff" : "var(--fg-muted)",
+              fontFamily: "var(--font-sans)", fontSize: 14, fontWeight: 600,
+              cursor: allRecorded && !isSubmitting ? "pointer" : "not-allowed",
+              boxShadow: allRecorded && !isSubmitting ? "var(--shadow-brand)" : "none",
+              transition: "all 0.15s",
+              display: "flex", alignItems: "center", gap: 8,
+            }}
+          >
+            {isSubmitting ? <><Loader2 className="h-4 w-4 animate-spin" />Submitting…</> : "Submit All Recordings"}
+          </button>
+          {!allRecorded && (
+            <span style={{ fontSize: 13, color: "var(--fg-muted)" }}>
+              Complete all {segmentStates.length} segments to submit.
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
