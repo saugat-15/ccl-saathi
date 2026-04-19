@@ -4,9 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { list, downloadData } from "aws-amplify/storage";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronLeft, Loader2 } from "lucide-react";
 
 type DialogueEntry = {
   basePath: string;
@@ -89,28 +88,37 @@ export default function CategoryPage({ params }: { params: { category: string } 
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto px-5 py-8">
-
+      <div className="max-w-4xl mx-auto px-5 py-8">
         <Button
           variant="ghost" size="sm"
           onClick={() => router.push("/")}
-          className="gap-1.5 -ml-2 mb-6 text-muted-foreground hover:text-foreground"
+          className="gap-1.5 -ml-2 mb-5 text-muted-foreground hover:text-foreground"
         >
           <ChevronLeft className="h-4 w-4" />
-          Categories
+          All categories
         </Button>
 
         <div className="mb-6">
-          <h1 className="text-xl font-bold tracking-tight text-foreground">{categoryLabel}</h1>
-          <p className="text-sm text-muted-foreground mt-1">Select a dialogue to begin practising</p>
+          <span style={{
+            fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase",
+            fontWeight: 700, color: "var(--amber-500)", background: "var(--amber-50)",
+            padding: "4px 8px", borderRadius: 4,
+          }}>
+            {categoryLabel.toUpperCase()}
+          </span>
+          <h1 className="font-serif text-2xl font-semibold text-foreground mt-3 mb-1">
+            {categoryLabel} dialogues
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Select a dialogue to begin practising
+          </p>
         </div>
 
-        <Separator className="mb-5" />
+        <Separator className="mb-6" />
 
         {isLoading ? (
-          <div className="flex items-center gap-2 text-muted-foreground text-sm py-4">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Loading…
+          <div className="flex items-center gap-2 text-muted-foreground text-sm py-6">
+            <Loader2 className="h-4 w-4 animate-spin" />Loading…
           </div>
         ) : loadError ? (
           <p className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-4 py-3">
@@ -119,31 +127,78 @@ export default function CategoryPage({ params }: { params: { category: string } 
         ) : dialogues.length === 0 ? (
           <p className="text-sm text-muted-foreground py-4">No dialogues found in this category.</p>
         ) : (
-          <ul className="space-y-2">
+          <ul className="grid sm:grid-cols-2 gap-3">
             {dialogues.map((d, i) => (
               <li key={d.basePath}>
-                <Card
+                {/* DialogueCard — matches design spec */}
+                <div
                   onClick={() => navigate(d)}
-                  className="flex items-center gap-4 px-5 py-4 cursor-pointer hover:border-primary/40 hover:bg-accent/40 transition-colors"
+                  className="group"
+                  style={{
+                    background: "#fff",
+                    border: "1px solid var(--gg-200)",
+                    borderRadius: 14, padding: "18px 20px",
+                    cursor: "pointer",
+                    transition: "all 0.2s cubic-bezier(0.22,1,0.36,1)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = "var(--forest-300)";
+                    e.currentTarget.style.boxShadow = "var(--shadow-md)";
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "var(--gg-200)";
+                    e.currentTarget.style.boxShadow = "none";
+                    e.currentTarget.style.transform = "none";
+                  }}
                 >
-                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <span className="text-xs font-bold text-primary">{i + 1}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-foreground">{d.label}</p>
-                    {d.scenario && (
-                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2 leading-relaxed">
-                        {d.scenario}
-                      </p>
-                    )}
-                  </div>
-                  {d.segmentCount && (
-                    <span className="text-xs text-muted-foreground flex-shrink-0 hidden sm:block">
-                      {d.segmentCount} segments
+                  {/* Top row */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                    <span style={{
+                      fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase",
+                      fontWeight: 700, color: "var(--amber-700)",
+                      background: "var(--amber-50)", padding: "4px 8px", borderRadius: 4,
+                    }}>
+                      {categoryLabel.toUpperCase()}
                     </span>
+                    <span style={{
+                      fontSize: 11, fontWeight: 600, letterSpacing: "0.05em",
+                      color: "var(--fg-muted)",
+                    }}>
+                      #{i + 1}
+                    </span>
+                  </div>
+
+                  {/* Serif title */}
+                  <h3 style={{
+                    fontFamily: "var(--font-serif)", fontSize: 18, fontWeight: 600,
+                    color: "var(--fg-strong)", margin: "0 0 4px", lineHeight: 1.3,
+                  }}>
+                    {d.label}
+                  </h3>
+
+                  {/* Scenario description */}
+                  {d.scenario && (
+                    <p style={{
+                      fontSize: 13, color: "var(--fg-muted)",
+                      margin: "0 0 14px", lineHeight: 1.45,
+                      display: "-webkit-box", WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical", overflow: "hidden",
+                    }}>
+                      {d.scenario}
+                    </p>
                   )}
-                  <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                </Card>
+
+                  {/* Meta row */}
+                  <div style={{ display: "flex", gap: 14, fontSize: 12, color: "var(--fg-muted)", alignItems: "center", marginTop: d.scenario ? 0 : 12 }}>
+                    {d.segmentCount && (
+                      <span>{d.segmentCount} segments</span>
+                    )}
+                    <span style={{ marginLeft: "auto", fontFamily: "var(--font-serif)", fontWeight: 600, fontSize: 13, color: "var(--fg-muted)" }}>
+                      Not attempted
+                    </span>
+                  </div>
+                </div>
               </li>
             ))}
           </ul>
