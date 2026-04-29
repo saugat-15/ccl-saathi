@@ -114,7 +114,7 @@ export default function CategoryPracticeGrid() {
           {/* Overall progress bar */}
           {!isLoading && categories.length > 0 && (
             <div style={{
-              background: "#fff", border: "1px solid var(--gg-200)",
+              background: "var(--bg-surface)", border: "1px solid var(--border-subtle)",
               borderRadius: 12, padding: "14px 18px", marginBottom: 28,
               display: "flex", alignItems: "center", gap: 16,
             }}>
@@ -123,14 +123,14 @@ export default function CategoryPracticeGrid() {
                   fontSize: 12, color: "var(--fg-muted)", marginBottom: 6 }}>
                   <span>Overall progress</span>
                   <span style={{ fontFamily: "var(--font-mono)", fontWeight: 600,
-                    color: "var(--forest-600)" }}>
+                    color: "var(--brand)" }}>
                     {totalDone} / {totalCount} completed
                   </span>
                 </div>
-                <div style={{ height: 6, background: "var(--gg-200)", borderRadius: 3, overflow: "hidden" }}>
+                <div style={{ height: 6, background: "var(--border-subtle)", borderRadius: 3, overflow: "hidden" }}>
                   <div style={{
                     height: "100%", borderRadius: 3,
-                    background: "var(--forest-500)",
+                    background: "var(--success)",
                     width: totalCount > 0 ? `${Math.min(100, (totalDone / totalCount) * 100)}%` : "0%",
                     transition: "width 0.4s ease",
                   }} />
@@ -174,8 +174,8 @@ export default function CategoryPracticeGrid() {
                     <div
                       onClick={() => router.push(`/category/${cat.name}`)}
                       style={{
-                        background: "#fff",
-                        border: "1px solid var(--gg-200)",
+                        background: "var(--bg-surface)",
+                        border: "1px solid var(--border-subtle)",
                         borderRadius: 14, padding: "18px 18px 16px",
                         cursor: "pointer",
                         transition: "all 0.2s cubic-bezier(0.22,1,0.36,1)",
@@ -188,7 +188,7 @@ export default function CategoryPracticeGrid() {
                         e.currentTarget.style.transform = "translateY(-2px)";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor = "var(--gg-200)";
+                        e.currentTarget.style.borderColor = "var(--border-subtle)";
                         e.currentTarget.style.boxShadow = "none";
                         e.currentTarget.style.transform = "none";
                       }}
@@ -197,7 +197,7 @@ export default function CategoryPracticeGrid() {
                       <div style={{
                         width: 42, height: 42, borderRadius: 10,
                         display: "flex", alignItems: "center", justifyContent: "center",
-                      }} className={p.iconWrapClass}>
+                        ...p.iconStyle }}>
                         <Icon style={{ width: 20, height: 20 }} />
                       </div>
 
@@ -217,18 +217,18 @@ export default function CategoryPracticeGrid() {
                       {/* Progress bar */}
                       <div style={{ marginTop: "auto" }}>
                         <div style={{
-                          height: 4, background: "var(--gg-200)",
+                          height: 4, background: "var(--border-subtle)",
                           borderRadius: 2, overflow: "hidden", marginBottom: 5,
                         }}>
                           <div style={{
                             height: "100%", borderRadius: 2,
-                            background: done > 0 ? "var(--forest-500)" : "var(--gg-300)",
+                            background: done > 0 ? "var(--success)" : "var(--border-default)",
                             width: `${pct}%`,
                             transition: "width 0.4s ease",
                           }} />
                         </div>
                         <p style={{
-                          fontSize: 11, color: done > 0 ? "var(--forest-600)" : "var(--fg-muted)",
+                          fontSize: 11, color: done > 0 ? "var(--brand)" : "var(--fg-muted)",
                           fontFamily: "var(--font-mono)", fontWeight: done > 0 ? 600 : 400,
                           margin: 0,
                         }}>
@@ -278,8 +278,8 @@ export default function CategoryPracticeGrid() {
                 <a href="/login?tab=signup" style={{ textDecoration: "none" }}>
                   <div
                     style={{
-                      background: "#fff",
-                      border: "1px solid var(--gg-200)",
+                      background: "var(--bg-surface)",
+                      border: "1px solid var(--border-subtle)",
                       borderRadius: 14, padding: "18px 18px 16px",
                       cursor: "pointer", opacity: 0.75,
                       display: "flex", flexDirection: "column", gap: 12,
@@ -292,7 +292,7 @@ export default function CategoryPracticeGrid() {
                       e.currentTarget.style.transform = "translateY(-2px)";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = "var(--gg-200)";
+                      e.currentTarget.style.borderColor = "var(--border-subtle)";
                       e.currentTarget.style.boxShadow = "none";
                       e.currentTarget.style.opacity = "0.75";
                       e.currentTarget.style.transform = "none";
@@ -301,7 +301,7 @@ export default function CategoryPracticeGrid() {
                     <div style={{
                       width: 42, height: 42, borderRadius: 10,
                       display: "flex", alignItems: "center", justifyContent: "center",
-                    }} className={p.iconWrapClass}>
+                      ...p.iconStyle }}>
                       <Icon style={{ width: 20, height: 20 }} />
                     </div>
                     <div>
@@ -317,7 +317,7 @@ export default function CategoryPracticeGrid() {
                     </div>
                     <div style={{ marginTop: "auto" }}>
                       <div style={{
-                        height: 4, background: "var(--gg-200)",
+                        height: 4, background: "var(--border-subtle)",
                         borderRadius: 2, marginBottom: 5,
                       }} />
                       <p style={{ fontSize: 11, color: "var(--fg-muted)",

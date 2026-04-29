@@ -16,9 +16,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
-import { BookOpen, History, HelpCircle, LogOut, Settings, Zap } from "lucide-react";
+import { BookOpen, History, HelpCircle, LogOut, Moon, Settings, Sun, Zap } from "lucide-react";
+import { useTheme } from "next-themes";
+import Logo from "./Logo";
 
-// Hardcoded to false until billing backend is ready
 const IS_PRO = false;
 
 function getInitials(given: string, family: string, email: string) {
@@ -30,77 +31,85 @@ function getInitials(given: string, family: string, email: string) {
 }
 
 const GUEST_NAV = [
-  { href: "/#features", label: "Features" },
-  { href: "/#how-it-works", label: "How it works" },
-  { href: "/#pricing", label: "Pricing" },
-  { href: "/#resources", label: "Resources" },
+  { href: "/#features",    label: "Features" },
+  { href: "/#how-it-works",label: "How it works" },
+  { href: "/pricing",      label: "Pricing" },
+  { href: "/#resources",   label: "Resources" },
 ] as const;
 
 const AUTH_NAV = [
-  { href: "/", label: "Practice" },
+  { href: "/",        label: "Practice" },
   { href: "/pricing", label: "Pricing" },
 ] as const;
 
+function ThemeToggleButton() {
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) {
+    return (
+      <button type="button" disabled
+        className="h-8 w-8 rounded-md border border-border flex items-center justify-center text-muted-foreground">
+        <Sun className="h-4 w-4" />
+      </button>
+    );
+  }
+
+  const isDark = resolvedTheme === "dark";
+  return (
+    <button
+      type="button"
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      className="h-8 w-8 rounded-md border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+    >
+      {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+    </button>
+  );
+}
+
 export default function Navbar() {
-  const pathname = usePathname();
-  const router = useRouter();
+  const pathname  = usePathname();
+  const router    = useRouter();
   const { signOut, user, authStatus } = useAuthenticator();
-  const [givenName, setGivenName] = useState("");
+
+  const [givenName,  setGivenName]  = useState("");
   const [familyName, setFamilyName] = useState("");
 
-  const email = user?.signInDetails?.loginId ?? "";
+  const email         = user?.signInDetails?.loginId ?? "";
   const authenticated = authStatus === "authenticated";
 
   useEffect(() => {
     if (!authenticated) return;
     fetchUserAttributes()
       .then((attrs) => {
-        setGivenName(attrs.given_name ?? "");
+        setGivenName(attrs.given_name  ?? "");
         setFamilyName(attrs.family_name ?? "");
       })
-      .catch(() => { });
+      .catch(() => {});
   }, [authenticated]);
 
-  const initials = getInitials(givenName, familyName, email);
-  const displayName =
-    givenName && familyName ? `${givenName} ${familyName}` : givenName || email;
-
+  const initials    = getInitials(givenName, familyName, email);
+  const displayName = givenName && familyName ? `${givenName} ${familyName}` : givenName || email;
   const isLoginRoute = pathname === "/login";
-  const navLinks = authenticated ? AUTH_NAV : GUEST_NAV;
+  const navLinks     = authenticated ? AUTH_NAV : GUEST_NAV;
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="max-w-6xl mx-auto px-5 h-14 flex items-center justify-between gap-4">
 
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 shrink-0">
-          {/* Icon mark */}
-          <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-            <rect width="32" height="32" rx="8" fill="#3a7d4e" />
-            <rect x="11" y="14" width="16" height="10" rx="2.5" fill="white" fillOpacity="0.5" />
-            <path d="M22 24 L25.5 28 L18.5 24Z" fill="white" fillOpacity="0.5" />
-            <rect x="5" y="7" width="16" height="10" rx="2.5" fill="white" />
-            <path d="M9 17 L5.5 21 L13 17Z" fill="white" />
-          </svg>
-          <div>
-            <div className="font-serif font-semibold text-[17px] leading-none tracking-tight text-foreground">
-              CCLSaathi
-            </div>
-            <div className="text-[9px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mt-0.5">
-              Nepali · CCL
-            </div>
-          </div>
+        <Link href="/" className="shrink-0">
+          <Logo iconSize={28} />
         </Link>
 
         {/* Nav links */}
         {!isLoginRoute && (
           <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground" aria-label="Primary">
             {navLinks.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="hover:text-foreground transition-colors"
-              >
+              <Link key={item.href} href={item.href}
+                className="hover:text-foreground transition-colors">
                 {item.label}
               </Link>
             ))}
@@ -109,6 +118,8 @@ export default function Navbar() {
 
         {/* Right side */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+
+          <ThemeToggleButton />
 
           {/* Guest: Log in + Sign up */}
           {!isLoginRoute && !authenticated && (
@@ -122,17 +133,12 @@ export default function Navbar() {
             </>
           )}
 
-          {/* Authenticated: Upgrade pill + avatar dropdown */}
+          {/* Authenticated */}
           {authenticated && (
             <>
-              {/* Upgrade to Pro — only shown when not pro */}
               {!IS_PRO && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="hidden sm:inline-flex gap-1.5 border-amber-300 text-amber-700 hover:bg-amber-50 hover:border-amber-400 font-semibold"
-                  asChild
-                >
+                <Button size="sm" variant="outline" asChild
+                  className="hidden sm:inline-flex gap-1.5 border-amber-300 text-amber-700 hover:bg-amber-50 hover:border-amber-400 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-950 font-semibold">
                   <Link href="/pricing">
                     <Zap className="h-3.5 w-3.5 fill-amber-400 text-amber-500" />
                     Upgrade to Pro
@@ -140,25 +146,16 @@ export default function Navbar() {
                 </Button>
               )}
 
-              {/* Pro badge when subscribed */}
               {IS_PRO && (
-                <span style={{
-                  fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase",
-                  fontWeight: 700, color: "var(--forest-700)",
-                  background: "var(--forest-50)", border: "1px solid var(--forest-200)",
-                  padding: "3px 8px", borderRadius: 20,
-                }}>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-primary border border-primary/30 bg-primary/10 px-2.5 py-0.5 rounded-full">
                   Pro
                 </span>
               )}
 
-              {/* Avatar dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    className="rounded-full ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  >
+                  <button type="button"
+                    className="rounded-full ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                     <Avatar className="h-8 w-8 cursor-pointer hover:opacity-80 transition-opacity">
                       <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
                         {initials}
@@ -168,7 +165,6 @@ export default function Navbar() {
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent align="end" className="w-60">
-                  {/* User info */}
                   <DropdownMenuLabel className="font-normal pb-2">
                     <div className="flex items-center gap-2.5">
                       <Avatar className="h-8 w-8 shrink-0">
@@ -183,24 +179,13 @@ export default function Navbar() {
                         <p className="text-xs text-muted-foreground truncate">{email}</p>
                       </div>
                     </div>
-                    {/* Plan badge */}
                     <div className="mt-2.5">
                       {IS_PRO ? (
-                        <span style={{
-                          fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase",
-                          fontWeight: 700, color: "var(--forest-700)",
-                          background: "var(--forest-50)", border: "1px solid var(--forest-200)",
-                          padding: "3px 9px", borderRadius: 20,
-                        }}>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-primary border border-primary/30 bg-primary/10 px-2.5 py-0.5 rounded-full">
                           Pro plan
                         </span>
                       ) : (
-                        <span style={{
-                          fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase",
-                          fontWeight: 700, color: "var(--fg-muted)",
-                          background: "var(--gg-100)", border: "1px solid var(--gg-200)",
-                          padding: "3px 9px", borderRadius: 20,
-                        }}>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground border border-border bg-muted px-2.5 py-0.5 rounded-full">
                           Free plan
                         </span>
                       )}
@@ -215,7 +200,7 @@ export default function Navbar() {
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => router.push("/history")} disabled>
                     <History className="h-4 w-4" />
-                    My Recordings
+                    My recordings
                     <span className="ml-auto text-xs text-muted-foreground">Soon</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => router.push("/settings")} disabled>
@@ -228,14 +213,12 @@ export default function Navbar() {
                     Help
                   </DropdownMenuItem>
 
-                  {/* Upgrade CTA inside dropdown for non-pro */}
                   {!IS_PRO && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={() => router.push("/pricing")}
-                        className="text-amber-700 focus:text-amber-700 focus:bg-amber-50"
-                      >
+                        className="text-amber-700 focus:text-amber-700 focus:bg-amber-50 dark:text-amber-400 dark:focus:bg-amber-950/50">
                         <Zap className="h-4 w-4 fill-amber-400 text-amber-500" />
                         Upgrade to Pro
                       </DropdownMenuItem>
@@ -246,8 +229,7 @@ export default function Navbar() {
 
                   <DropdownMenuItem
                     onClick={signOut}
-                    className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                  >
+                    className="text-destructive focus:text-destructive focus:bg-destructive/10">
                     <LogOut className="h-4 w-4" />
                     Sign out
                   </DropdownMenuItem>

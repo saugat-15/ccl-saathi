@@ -78,8 +78,8 @@ export default function PricingPage() {
         }}>
           {/* Free plan */}
           <div style={{
-            background: "#fff",
-            border: currentPlan === "free" ? "2px solid var(--gg-400)" : "1px solid var(--gg-200)",
+            background: "var(--bg-surface)",
+            border: currentPlan === "free" ? "2px solid var(--border-default)" : "1px solid var(--border-subtle)",
             borderRadius: 18, padding: "28px 28px 24px",
             display: "flex", flexDirection: "column",
             position: "relative",
@@ -89,7 +89,7 @@ export default function PricingPage() {
                 position: "absolute", top: 18, right: 18,
                 fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase",
                 fontWeight: 700, color: "var(--fg-muted)",
-                background: "var(--gg-100)", border: "1px solid var(--gg-200)",
+                background: "var(--bg-sunken)", border: "1px solid var(--border-subtle)",
                 padding: "3px 9px", borderRadius: 20,
               }}>
                 Current plan
@@ -118,7 +118,7 @@ export default function PricingPage() {
             <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px", display: "flex", flexDirection: "column", gap: 10 }}>
               {FREE_FEATURES.map((f) => (
                 <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14, color: "var(--fg-default)" }}>
-                  <Check style={{ width: 16, height: 16, color: "var(--forest-500)", flexShrink: 0, marginTop: 1 }} />
+                  <Check style={{ width: 16, height: 16, color: "var(--success)", flexShrink: 0, marginTop: 1 }} />
                   {f}
                 </li>
               ))}
@@ -130,7 +130,7 @@ export default function PricingPage() {
                   disabled
                   style={{
                     width: "100%", padding: "11px 20px", borderRadius: 10,
-                    background: "var(--gg-100)", border: "1px solid var(--gg-200)",
+                    background: "var(--bg-sunken)", border: "1px solid var(--border-subtle)",
                     color: "var(--fg-muted)", fontFamily: "var(--font-sans)",
                     fontSize: 14, fontWeight: 600, cursor: "not-allowed",
                   }}
@@ -142,13 +142,13 @@ export default function PricingPage() {
                   onClick={() => router.push("/")}
                   style={{
                     width: "100%", padding: "11px 20px", borderRadius: 10,
-                    background: "transparent", border: "1px solid var(--gg-300)",
+                    background: "transparent", border: "1px solid var(--border-default)",
                     color: "var(--fg-strong)", fontFamily: "var(--font-sans)",
                     fontSize: 14, fontWeight: 600, cursor: "pointer",
                     transition: "border-color 0.15s",
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--gg-500)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--gg-300)")}
+                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border-default)")}
                 >
                   Continue with Free
                 </button>
@@ -158,7 +158,7 @@ export default function PricingPage() {
 
           {/* Pro plan */}
           <div style={{
-            background: currentPlan === "pro" ? "var(--forest-50)" : "#fff",
+            background: currentPlan === "pro" ? "var(--forest-50)" : "var(--bg-surface)",
             border: currentPlan === "pro" ? "2px solid var(--forest-400)" : "2px solid var(--forest-300)",
             borderRadius: 18, padding: "28px 28px 24px",
             display: "flex", flexDirection: "column",
@@ -200,7 +200,7 @@ export default function PricingPage() {
             <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px", display: "flex", flexDirection: "column", gap: 10 }}>
               {PRO_FEATURES.map((f) => (
                 <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14, color: "var(--fg-default)" }}>
-                  <Check style={{ width: 16, height: 16, color: "var(--forest-500)", flexShrink: 0, marginTop: 1 }} />
+                  <Check style={{ width: 16, height: 16, color: "var(--success)", flexShrink: 0, marginTop: 1 }} />
                   {f}
                 </li>
               ))}
@@ -224,7 +224,7 @@ export default function PricingPage() {
                   onClick={() => {/* billing flow goes here */}}
                   style={{
                     width: "100%", padding: "11px 20px", borderRadius: 10,
-                    background: "var(--forest-500)", border: "none",
+                    background: "var(--brand)", border: "none",
                     color: "#fff", fontFamily: "var(--font-sans)",
                     fontSize: 14, fontWeight: 600, cursor: "pointer",
                     boxShadow: "var(--shadow-brand)",
@@ -232,7 +232,7 @@ export default function PricingPage() {
                     transition: "background 0.15s",
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.background = "var(--forest-600)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "var(--forest-500)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "var(--brand)")}
                 >
                   <Zap style={{ width: 15, height: 15, fill: "rgba(255,255,255,0.8)" }} />
                   Upgrade to Pro
@@ -242,7 +242,7 @@ export default function PricingPage() {
                   onClick={() => router.push("/login?tab=signup")}
                   style={{
                     width: "100%", padding: "11px 20px", borderRadius: 10,
-                    background: "var(--forest-500)", border: "none",
+                    background: "var(--brand)", border: "none",
                     color: "#fff", fontFamily: "var(--font-sans)",
                     fontSize: 14, fontWeight: 600, cursor: "pointer",
                     boxShadow: "var(--shadow-brand)",
@@ -250,7 +250,7 @@ export default function PricingPage() {
                     transition: "background 0.15s",
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.background = "var(--forest-600)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "var(--forest-500)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "var(--brand)")}
                 >
                   <Zap style={{ width: 15, height: 15, fill: "rgba(255,255,255,0.8)" }} />
                   Get started with Pro
@@ -265,12 +265,12 @@ export default function PricingPage() {
 
         {/* Feature comparison table */}
         <div style={{
-          background: "#fff", border: "1px solid var(--gg-200)",
+          background: "var(--bg-surface)", border: "1px solid var(--border-subtle)",
           borderRadius: 16, overflow: "hidden", marginBottom: 48,
         }}>
           <div style={{
-            padding: "16px 24px", borderBottom: "1px solid var(--gg-100)",
-            background: "var(--gg-50)",
+            padding: "16px 24px", borderBottom: "1px solid var(--border-subtle)",
+            background: "var(--bg-sunken)",
           }}>
             <p style={{
               fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase",
@@ -282,7 +282,7 @@ export default function PricingPage() {
 
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr style={{ borderBottom: "1px solid var(--gg-100)" }}>
+              <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
                 <th style={{ padding: "12px 24px", textAlign: "left", fontSize: 13,
                   fontWeight: 600, color: "var(--fg-muted)", width: "55%" }}>
                   Feature
@@ -292,7 +292,7 @@ export default function PricingPage() {
                   Free
                 </th>
                 <th style={{ padding: "12px 16px", textAlign: "center", fontSize: 13,
-                  fontWeight: 600, color: "var(--forest-600)" }}>
+                  fontWeight: 600, color: "var(--brand)" }}>
                   Pro
                 </th>
               </tr>
@@ -309,28 +309,28 @@ export default function PricingPage() {
                 { label: "Priority new dialogue access", free: false, pro: true },
               ].map((row, i) => (
                 <tr key={row.label} style={{
-                  borderBottom: i < 7 ? "1px solid var(--gg-100)" : "none",
-                  background: i % 2 === 0 ? "#fff" : "var(--gg-50)",
+                  borderBottom: i < 7 ? "1px solid var(--border-subtle)" : "none",
+                  background: i % 2 === 0 ? "var(--bg-surface)" : "var(--bg-sunken)",
                 }}>
                   <td style={{ padding: "12px 24px", fontSize: 14, color: "var(--fg-default)" }}>
                     {row.label}
                   </td>
                   <td style={{ padding: "12px 16px", textAlign: "center" }}>
                     {row.free === true ? (
-                      <Check style={{ width: 16, height: 16, color: "var(--forest-500)", margin: "0 auto" }} />
+                      <Check style={{ width: 16, height: 16, color: "var(--success)", margin: "0 auto" }} />
                     ) : row.free === false ? (
-                      <span style={{ fontSize: 16, color: "var(--gg-300)", lineHeight: 1 }}>—</span>
+                      <span style={{ fontSize: 16, color: "var(--fg-subtle)", lineHeight: 1 }}>—</span>
                     ) : (
                       <span style={{ fontSize: 12, color: "var(--fg-muted)" }}>{row.free}</span>
                     )}
                   </td>
                   <td style={{ padding: "12px 16px", textAlign: "center" }}>
                     {row.pro === true ? (
-                      <Check style={{ width: 16, height: 16, color: "var(--forest-500)", margin: "0 auto" }} />
+                      <Check style={{ width: 16, height: 16, color: "var(--success)", margin: "0 auto" }} />
                     ) : row.pro === false ? (
-                      <span style={{ fontSize: 16, color: "var(--gg-300)", lineHeight: 1 }}>—</span>
+                      <span style={{ fontSize: 16, color: "var(--fg-subtle)", lineHeight: 1 }}>—</span>
                     ) : (
-                      <span style={{ fontSize: 12, color: "var(--forest-600)", fontWeight: 600 }}>{row.pro}</span>
+                      <span style={{ fontSize: 12, color: "var(--brand)", fontWeight: 600 }}>{row.pro}</span>
                     )}
                   </td>
                 </tr>
@@ -367,7 +367,7 @@ export default function PricingPage() {
               },
             ].map((item) => (
               <div key={item.q} style={{
-                background: "#fff", border: "1px solid var(--gg-200)",
+                background: "var(--bg-surface)", border: "1px solid var(--border-subtle)",
                 borderRadius: 12, padding: "16px 20px",
               }}>
                 <p style={{ fontSize: 14, fontWeight: 600, color: "var(--fg-strong)", margin: "0 0 6px" }}>
@@ -416,25 +416,25 @@ export default function PricingPage() {
               placeholder="you@example.com"
               style={{
                 flex: 1, minWidth: 200, height: 42, borderRadius: 8,
-                border: "1px solid var(--gg-300)", padding: "0 12px",
+                border: "1px solid var(--border-default)", padding: "0 12px",
                 fontSize: 14, fontFamily: "var(--font-sans)",
-                outline: "none", background: "#fff",
+                outline: "none", background: "var(--bg-surface)",
               }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "var(--forest-400)")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "var(--gg-300)")}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "var(--brand)")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border-default)")}
             />
             <button
               type="submit"
               style={{
                 height: 42, padding: "0 20px", borderRadius: 8,
-                background: "var(--forest-500)", border: "none",
+                background: "var(--brand)", border: "none",
                 color: "#fff", fontFamily: "var(--font-sans)",
                 fontSize: 14, fontWeight: 600, cursor: "pointer",
                 boxShadow: "var(--shadow-brand)",
                 transition: "background 0.15s",
               }}
               onMouseEnter={(e) => (e.currentTarget.style.background = "var(--forest-600)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "var(--forest-500)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "var(--brand)")}
             >
               Join waitlist
             </button>

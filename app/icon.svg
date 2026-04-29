@@ -1,9 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <rect width="32" height="32" rx="8" fill="#3a7d4e"/>
-  <!-- Back bubble (second speaker, bottom-right) -->
-  <rect x="11" y="14" width="16" height="10" rx="2.5" fill="white" fill-opacity="0.5"/>
-  <path d="M22 24 L25.5 28 L18.5 24Z" fill="white" fill-opacity="0.5"/>
-  <!-- Front bubble (first speaker, top-left) -->
-  <rect x="5" y="7" width="16" height="10" rx="2.5" fill="white"/>
-  <path d="M9 17 L5.5 21 L13 17Z" fill="white"/>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a3d28"/>
+      <stop offset="100%" stop-color="#0d2418"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="32" height="32" rx="7" fill="url(#bg)"/>
+  <!-- Subtle hill silhouette -->
+  <path d="M0,28 L3,25 L7,27 L10,22 L13,25 L16,19 L20,22.5 L23,18 L26,21 L29,19 L32,21 L32,32 L0,32Z" fill="#5e9c6d" opacity="0.2"/>
+  <!-- Mic body (white outline) -->
+  <rect x="13" y="7" width="6" height="11" rx="3" stroke="white" stroke-width="1.5" fill="none"/>
+  <!-- Amber waveform bars inside mic -->
+  <rect x="14" y="13" width="1.5" height="2.5" rx="0.5" fill="#e8a93a"/>
+  <rect x="15.5" y="10.5" width="1.5" height="5" rx="0.5" fill="#e8a93a"/>
+  <rect x="17" y="12" width="1.5" height="3.5" rx="0.5" fill="#e8a93a"/>
+  <!-- Boom arc -->
+  <path d="M9 17.5 Q9 24.5 16 24.5 Q23 24.5 23 17.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Stand -->
+  <line x1="16" y1="24.5" x2="16" y2="27" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Base -->
+  <line x1="12" y1="27" x2="20" y2="27" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Amber accent dot (top-right, ring style) -->
+  <circle cx="24.5" cy="6.5" r="2.5" fill="#e8a93a"/>
+  <circle cx="24.5" cy="6.5" r="1.2" fill="#1d4d30"/>
 </svg>

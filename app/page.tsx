@@ -19,7 +19,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       <MarketingSections isAuthenticated={false} />
-      <CategoryPracticeGrid />
+      {/* <CategoryPracticeGrid /> */}
     </div>
   );
 }

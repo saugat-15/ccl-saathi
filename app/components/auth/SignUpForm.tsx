@@ -5,29 +5,6 @@ import { signUp, confirmSignUp, signIn } from "aws-amplify/auth";
 
 type Step = "form" | "confirm";
 
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "0.75rem 1rem",
-  border: "1px solid #d1d5db",
-  borderRadius: "8px",
-  fontSize: "0.95rem",
-  color: "#111827",
-  outline: "none",
-  backgroundColor: "#fff",
-};
-
-const buttonStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "0.85rem",
-  backgroundColor: "#15803d",
-  color: "#fff",
-  border: "none",
-  borderRadius: "8px",
-  fontSize: "1rem",
-  fontWeight: 600,
-  cursor: "pointer",
-};
-
 export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () => void }) {
   const [step, setStep] = useState<Step>("form");
   const [email, setEmail] = useState("");
@@ -66,39 +43,35 @@ export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () 
 
   if (step === "confirm") {
     return (
-      <form
-        onSubmit={handleConfirm}
-        style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}
-      >
-        <p style={{ color: "#6b7280", fontSize: "0.875rem", margin: 0 }}>
-          We sent a verification code to <strong style={{ color: "#374151" }}>{email}</strong>.
+      <form onSubmit={handleConfirm} className="flex flex-col gap-5">
+        <p className="text-sm text-muted-foreground">
+          We sent a verification code to{" "}
+          <strong className="text-foreground font-semibold">{email}</strong>.
         </p>
 
-        <div>
-          <label
-            style={{
-              display: "block",
-              fontSize: "0.875rem",
-              fontWeight: 500,
-              color: "#374151",
-              marginBottom: "0.5rem",
-            }}
-          >
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="confirm-code" className="text-sm font-medium text-foreground">
             Verification code
           </label>
           <input
+            id="confirm-code"
             type="text"
+            inputMode="numeric"
             value={code}
             onChange={(e) => setCode(e.target.value)}
             placeholder="123456"
             required
-            style={inputStyle}
+            className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring transition"
           />
         </div>
 
-        {error && <p style={{ color: "#dc2626", fontSize: "0.85rem", margin: 0 }}>{error}</p>}
+        {error && <p className="text-sm text-destructive">{error}</p>}
 
-        <button type="submit" disabled={loading} style={buttonStyle}>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60 transition"
+        >
           {loading ? "Verifying…" : "Verify email"}
         </button>
       </form>
@@ -106,73 +79,53 @@ export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () 
   }
 
   return (
-    <form
-      onSubmit={handleSignUp}
-      style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}
-    >
-      <div>
-        <label
-          style={{
-            display: "block",
-            fontSize: "0.875rem",
-            fontWeight: 500,
-            color: "#374151",
-            marginBottom: "0.5rem",
-          }}
-        >
+    <form onSubmit={handleSignUp} className="flex flex-col gap-5">
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="signup-email" className="text-sm font-medium text-foreground">
           Email address
         </label>
         <input
+          id="signup-email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
           required
-          style={inputStyle}
+          className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring transition"
         />
       </div>
 
-      <div>
-        <label
-          style={{
-            display: "block",
-            fontSize: "0.875rem",
-            fontWeight: 500,
-            color: "#374151",
-            marginBottom: "0.5rem",
-          }}
-        >
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="signup-password" className="text-sm font-medium text-foreground">
           Password
         </label>
         <input
+          id="signup-password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Create a password"
           required
-          style={inputStyle}
+          className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring transition"
         />
       </div>
 
-      {error && <p style={{ color: "#dc2626", fontSize: "0.85rem", margin: 0 }}>{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
-      <button type="submit" disabled={loading} style={buttonStyle}>
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60 transition"
+      >
         {loading ? "Creating account…" : "Create account"}
       </button>
 
-      <p style={{ textAlign: "center", fontSize: "0.875rem", color: "#6b7280", margin: 0 }}>
+      <p className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}
         <button
           type="button"
           onClick={onSwitchToSignIn}
-          style={{
-            background: "none",
-            border: "none",
-            color: "#16a34a",
-            cursor: "pointer",
-            padding: 0,
-            fontSize: "0.875rem",
-          }}
+          className="text-primary font-medium hover:underline"
         >
           Sign in
         </button>

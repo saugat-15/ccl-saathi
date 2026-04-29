@@ -17,7 +17,7 @@ function fmt(secs: number) {
   return `${m}:${s}`;
 }
 
-const BARS = 28;
+const BARS = 24;
 
 export default function AudioRecorder({
   onRecordingComplete,
@@ -29,6 +29,8 @@ export default function AudioRecorder({
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [elapsedSec, setElapsedSec] = useState(0);
+  const [recordedDuration, setRecordedDuration] = useState(0);
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
@@ -76,11 +78,13 @@ export default function AudioRecorder({
 
       recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
       recorder.onstop = () => {
+        const dur = (Date.now() - recordStartRef.current) / 1000;
         clearTick();
         const blob = new Blob(chunksRef.current, { type: mimeType });
         const url = URL.createObjectURL(blob);
         setAudioUrl(url);
         setState("recorded");
+        setRecordedDuration(dur);
         onRecordingComplete(blob, mimeType);
         stream.getTracks().forEach((t) => t.stop());
         streamRef.current = null;
@@ -115,6 +119,7 @@ export default function AudioRecorder({
     mediaRecorderRef.current = null;
     setState("idle");
     setPlayTime(0); setPlayDuration(0); setIsPlaying(false);
+    setRecordedDuration(0);
   }
 
   function togglePlayback() {
@@ -134,7 +139,6 @@ export default function AudioRecorder({
 
   const seekPct = playDuration > 0 ? (playTime / playDuration) * 100 : 0;
 
-  /* ── Waveform bars ── */
   function barHeight(i: number) {
     if (state === "idle") return 10;
     if (state === "recorded") return 20 + ((i * 13) % 60);
@@ -142,28 +146,29 @@ export default function AudioRecorder({
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      {/* Label */}
-      <p style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase",
-        fontWeight: 600, color: "var(--fg-muted)", margin: 0 }}>
-        Your interpretation
-      </p>
-
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {error && (
-        <p style={{ fontSize: 13, color: "var(--danger)",
-          background: "var(--danger-soft)", borderRadius: 8, padding: "8px 12px", margin: 0 }}>
+        <p style={{
+          fontSize: 13, color: "var(--danger)",
+          background: "var(--danger-soft)", borderRadius: 8,
+          padding: "8px 12px", margin: 0,
+        }}>
           {error}
         </p>
       )}
 
-      {/* Recorder row — idle or recording */}
+      {/* ── Recorder card (idle / recording) ── */}
       {(state === "idle" || state === "recording") && (
-        <div style={{ background: "var(--gg-50)", border: "1px solid var(--gg-200)",
-          borderRadius: 16, padding: "18px 22px",
-          display: "flex", alignItems: "center", gap: 20,
-          opacity: isDisabled ? 0.5 : 1 }}>
+        <div style={{
+          background: "var(--bg-sunken)",
+          border: `1px solid ${state === "recording" ? "rgba(239,68,68,0.25)" : "var(--border-subtle)"}`,
+          borderRadius: 14, padding: "16px 18px",
+          display: "flex", alignItems: "center", gap: 14,
+          opacity: isDisabled ? 0.5 : 1,
+          transition: "border-color 0.2s",
+        }}>
 
-          {/* Big round record / stop button */}
+          {/* Record / stop button */}
           <button
             type="button"
             onClick={state === "idle" ? startRecording : stopRecording}
@@ -171,30 +176,27 @@ export default function AudioRecorder({
             aria-label={state === "recording" ? "Stop recording" : "Start recording"}
             style={{
               position: "relative",
-              width: 64, height: 64, borderRadius: "50%",
+              width: 52, height: 52, borderRadius: "50%",
               background: state === "recording" ? "var(--rec-press)" : "var(--rec)",
-              border: "none", cursor: isDisabled ? "not-allowed" : "pointer",
+              border: "none",
+              cursor: isDisabled ? "not-allowed" : "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
               flexShrink: 0,
               boxShadow: "var(--shadow-rec)",
               transition: "background 0.15s",
             }}
           >
-            {/* Pulse ring while recording */}
             {state === "recording" && (
               <span style={{
-                position: "absolute", inset: -6, borderRadius: "50%",
+                position: "absolute", inset: -5, borderRadius: "50%",
                 border: "2px solid var(--rec)", opacity: 0.4,
                 animation: "pulse-rec 1.4s infinite",
               }} />
             )}
-            {/* Icon */}
             {state === "recording" ? (
-              /* Stop square */
-              <span style={{ width: 18, height: 18, borderRadius: 4, background: "#fff" }} />
+              <span style={{ width: 15, height: 15, borderRadius: 3, background: "#fff" }} />
             ) : (
-              /* Mic shape */
-              <svg width="22" height="28" viewBox="0 0 22 28" fill="none">
+              <svg width="20" height="26" viewBox="0 0 22 28" fill="none" aria-hidden>
                 <rect x="5" y="0" width="12" height="18" rx="6" fill="#fff"/>
                 <path d="M1 13c0 5.523 4.477 10 10 10s10-4.477 10-10" stroke="#fff" strokeWidth="2" strokeLinecap="round" fill="none"/>
                 <line x1="11" y1="23" x2="11" y2="28" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
@@ -202,32 +204,42 @@ export default function AudioRecorder({
             )}
           </button>
 
-          {/* Waveform */}
-          <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 3, height: 44 }}>
-            {Array.from({ length: BARS }).map((_, i) => (
-              <span key={i} style={{
-                display: "block",
-                width: 3, borderRadius: 2,
-                height: `${barHeight(i)}%`,
-                background: state === "idle" ? "var(--gg-300)" : "var(--forest-500)",
-                opacity: state === "idle" ? 0.5 : 1,
-                transition: "height 0.2s ease-out",
-              }} />
-            ))}
+          {/* Label + waveform */}
+          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 5 }}>
+            <span style={{
+              fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase",
+              fontWeight: 700,
+              color: state === "recording" ? "var(--rec)" : "var(--fg-muted)",
+            }}>
+              {state === "recording" ? "Recording…" : "Tap to record your interpretation"}
+            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 3, height: 32 }}>
+              {Array.from({ length: BARS }).map((_, i) => (
+                <span key={i} style={{
+                  display: "block", width: 3, borderRadius: 2,
+                  height: `${barHeight(i)}%`,
+                  background: state === "recording" ? "var(--rec)" : "var(--border-default)",
+                  opacity: state === "idle" ? 0.45 : 1,
+                  transition: "height 0.2s ease-out, background 0.2s",
+                }} />
+              ))}
+            </div>
           </div>
 
           {/* Timer */}
-          <div style={{ fontFamily: "var(--font-mono)", fontSize: 15, fontWeight: 500,
-            color: state === "recording" ? "var(--rec)" : "var(--fg-muted)",
-            minWidth: 52, textAlign: "right" }}>
+          <span style={{
+            fontFamily: "var(--font-mono)", fontSize: 14, fontWeight: 600,
+            color: state === "recording" ? "var(--rec)" : "var(--fg-subtle)",
+            flexShrink: 0, minWidth: 44, textAlign: "right",
+          }}>
             {fmt(elapsedSec)}
-          </div>
+          </span>
         </div>
       )}
 
-      {/* Playback row — after recording */}
+      {/* ── Playback card (after recording) ── */}
       {state === "recorded" && audioUrl && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <>
           <audio
             ref={playbackRef}
             src={audioUrl}
@@ -237,65 +249,92 @@ export default function AudioRecorder({
             onPause={() => setIsPlaying(false)}
           />
 
-          <div style={{ background: "var(--gg-50)", border: "1px solid var(--gg-200)",
-            borderRadius: 12, padding: "12px 16px",
-            display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{
+            background: "var(--bg-sunken)",
+            border: "1px solid var(--border-subtle)",
+            borderRadius: 14, padding: "14px 16px",
+            display: "flex", alignItems: "center", gap: 12,
+          }}>
             {/* Play/pause */}
             <button
               type="button"
               onClick={togglePlayback}
               style={{
                 width: 40, height: 40, borderRadius: "50%",
-                background: "var(--forest-500)", border: "none",
+                background: "var(--brand)", border: "none",
                 cursor: "pointer", flexShrink: 0,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 boxShadow: "var(--shadow-brand)",
+                transition: "background 0.15s",
               }}
             >
               {isPlaying ? (
                 <span style={{ display: "flex", gap: 3 }}>
-                  <span style={{ width: 3, height: 12, background: "#fff", borderRadius: 1 }} />
-                  <span style={{ width: 3, height: 12, background: "#fff", borderRadius: 1 }} />
+                  <span style={{ width: 3, height: 11, background: "#fff", borderRadius: 1 }} />
+                  <span style={{ width: 3, height: 11, background: "#fff", borderRadius: 1 }} />
                 </span>
               ) : (
-                <span style={{ width: 0, height: 0, borderStyle: "solid",
-                  borderWidth: "7px 0 7px 11px",
+                <span style={{
+                  width: 0, height: 0, borderStyle: "solid",
+                  borderWidth: "6px 0 6px 10px",
                   borderColor: "transparent transparent transparent #fff",
-                  marginLeft: 2 }} />
+                  marginLeft: 2,
+                }} />
               )}
             </button>
 
-            <input
-              type="range" min={0} max={100} step={0.1}
-              value={seekPct} onChange={handleSeek}
-              disabled={playDuration <= 0}
-              className="audio-range"
-              style={{ flex: 1, minWidth: 0 }}
-            />
-
-            <span style={{ fontFamily: "var(--font-mono)", fontSize: 13,
-              color: "var(--fg-muted)", flexShrink: 0 }}>
-              {playDuration > 0 ? fmt(playTime) : "0:00"}
-            </span>
+            {/* Progress track + timestamps */}
+            <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 5 }}>
+              <input
+                type="range" min={0} max={100} step={0.1}
+                value={seekPct} onChange={handleSeek}
+                disabled={playDuration <= 0}
+                className="audio-range"
+                style={{
+                  width: "100%",
+                  background: `linear-gradient(to right, var(--brand) 0%, var(--brand) ${seekPct}%, var(--border-subtle) ${seekPct}%, var(--border-subtle) 100%)`,
+                }}
+              />
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--fg-muted)" }}>
+                  {fmt(playTime)}
+                </span>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--fg-subtle)" }}>
+                  {playDuration > 0 ? fmt(playDuration) : fmt(recordedDuration)}
+                </span>
+              </div>
+            </div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          {/* Re-record + saved indicator */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingInline: 2 }}>
             <button
               type="button"
               onClick={reRecord}
               disabled={isDisabled}
-              style={{ background: "transparent", border: "1px solid var(--gg-300)",
-                padding: "7px 14px", borderRadius: 8,
-                fontSize: 13, fontWeight: 500, color: "var(--fg-strong)",
-                cursor: isDisabled ? "not-allowed" : "pointer", fontFamily: "var(--font-sans)" }}
+              style={{
+                background: "transparent",
+                border: "1px solid var(--border-default)",
+                padding: "6px 14px", borderRadius: 8,
+                fontSize: 13, fontWeight: 500, color: "var(--fg-default)",
+                cursor: isDisabled ? "not-allowed" : "pointer",
+                fontFamily: "var(--font-sans)",
+                transition: "border-color 0.15s",
+              }}
             >
               Re-record
             </button>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--forest-600)" }}>
-              ✓ Recording saved
+            <span style={{
+              display: "flex", alignItems: "center", gap: 5,
+              fontSize: 12, fontWeight: 600, color: "var(--success)",
+            }}>
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden>
+                <path d="M2 6.5l3 3L11 3" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Recording saved
             </span>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
