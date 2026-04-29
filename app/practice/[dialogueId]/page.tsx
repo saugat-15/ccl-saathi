@@ -50,7 +50,7 @@ function AudioPlayer({ audioUrl }: { audioUrl: string }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const pct = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   function handlePlay() {
     const el = audioRef.current;
@@ -69,9 +69,11 @@ function AudioPlayer({ audioUrl }: { audioUrl: string }) {
   }
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12,
-      background: "var(--gg-50)", border: "1px solid var(--gg-200)",
-      borderRadius: 10, padding: "10px 14px" }}>
+    <div style={{
+      display: "flex", alignItems: "center", gap: 12,
+      background: "var(--bg-sunken)", border: "1px solid var(--border-subtle)",
+      borderRadius: 12, padding: "12px 16px",
+    }}>
       <audio
         ref={audioRef}
         src={audioUrl}
@@ -83,26 +85,39 @@ function AudioPlayer({ audioUrl }: { audioUrl: string }) {
       <button
         type="button"
         onClick={isPlaying ? handlePause : handlePlay}
-        style={{ width: 34, height: 34, borderRadius: "50%",
-          background: "var(--forest-500)", border: "none",
+        style={{
+          width: 36, height: 36, borderRadius: "50%",
+          background: "var(--brand)", border: "none",
           cursor: "pointer", flexShrink: 0,
           display: "flex", alignItems: "center", justifyContent: "center",
-          boxShadow: "var(--shadow-brand)" }}
+          boxShadow: "var(--shadow-brand)",
+        }}
       >
         {isPlaying
           ? <Pause className="h-3 w-3 text-white fill-white" />
           : <Play className="h-3 w-3 text-white fill-white ml-0.5" />
         }
       </button>
-      <input
-        type="range" min={0} max={100} step={0.1} value={progress}
-        onChange={handleSeek}
-        className="audio-range flex-1 min-w-0"
-      />
-      <span style={{ fontFamily: "var(--font-mono)", fontSize: 12,
-        color: "var(--fg-muted)", flexShrink: 0 }}>
-        {fmt(currentTime)} / {duration > 0 ? fmt(duration) : "--:--"}
-      </span>
+      {/* Progress track + timestamps */}
+      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 5 }}>
+        <input
+          type="range" min={0} max={100} step={0.1} value={pct}
+          onChange={handleSeek}
+          className="audio-range"
+          style={{
+            width: "100%",
+            background: `linear-gradient(to right, var(--brand) 0%, var(--brand) ${pct}%, var(--border-subtle) ${pct}%, var(--border-subtle) 100%)`,
+          }}
+        />
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--fg-muted)" }}>
+            {fmt(currentTime)}
+          </span>
+          <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--fg-subtle)" }}>
+            {duration > 0 ? fmt(duration) : "--:--"}
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -118,6 +133,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
   const [fullAudioUrl, setFullAudioUrl] = useState<string | null>(null);
   const [transcriptSegments, setTranscriptSegments] = useState<TranscriptSegment[]>([]);
   const [segmentAudioUrls, setSegmentAudioUrls] = useState<(string | null)[]>([]);
+  const [scenario, setScenario] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -145,7 +161,8 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
           if (!jsonItem) throw new Error("No transcript found for this dialogue.");
 
           const { body } = await downloadData({ path: jsonItem.path }).result;
-          const json = JSON.parse(await body.text()) as { segments?: TranscriptSegment[] };
+          const json = JSON.parse(await body.text()) as { scenario?: string; segments?: TranscriptSegment[] };
+          if (json.scenario) setScenario(json.scenario);
           const segs = (json.segments ?? []).sort((a, b) => a.segmentIndex - b.segmentIndex);
           if (segs.length === 0) throw new Error("Transcript has no segments.");
 
@@ -241,7 +258,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
   if (submitDone) return (
     <div className="min-h-screen bg-background flex items-center justify-center px-5">
       <div style={{
-        background: "#fff", border: "1px solid var(--gg-200)",
+        background: "var(--bg-surface)", border: "1px solid var(--border-subtle)",
         borderRadius: 18, padding: "40px 32px",
         width: "100%", maxWidth: 400, textAlign: "center",
         boxShadow: "var(--shadow-md)",
@@ -252,7 +269,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
           display: "flex", alignItems: "center", justifyContent: "center",
           margin: "0 auto 16px",
         }}>
-          <CheckCircle2 style={{ width: 28, height: 28, color: "var(--forest-500)" }} />
+          <CheckCircle2 style={{ width: 28, height: 28, color: "var(--success)" }} />
         </div>
         <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600,
           color: "var(--fg-strong)", margin: "0 0 8px" }}>Submitted!</h2>
@@ -263,7 +280,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
           onClick={() => router.push(`/category/${category}`)}
           style={{
             width: "100%", padding: "11px 20px", borderRadius: 10,
-            background: "var(--forest-500)", border: "none", color: "#fff",
+            background: "var(--brand)", border: "none", color: "#fff",
             fontFamily: "var(--font-sans)", fontSize: 14, fontWeight: 600,
             cursor: "pointer", boxShadow: "var(--shadow-brand)",
           }}
@@ -317,7 +334,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
               key={key}
               onClick={() => setMode(key)}
               style={{
-                background: "#fff", border: "1px solid var(--gg-200)",
+                background: "var(--bg-surface)", border: "1px solid var(--border-subtle)",
                 borderRadius: 14, padding: "18px 20px",
                 cursor: "pointer", display: "flex", alignItems: "flex-start", gap: 16,
                 transition: "all 0.2s cubic-bezier(0.22,1,0.36,1)",
@@ -328,7 +345,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
                 e.currentTarget.style.transform = "translateY(-1px)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "var(--gg-200)";
+                e.currentTarget.style.borderColor = "var(--border-subtle)";
                 e.currentTarget.style.boxShadow = "none";
                 e.currentTarget.style.transform = "none";
               }}
@@ -338,7 +355,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
                 background: "var(--forest-50)", border: "1px solid var(--forest-100)",
                 display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
               }}>
-                <Icon style={{ width: 20, height: 20, color: "var(--forest-500)" }} />
+                <Icon style={{ width: 20, height: 20, color: "var(--brand)" }} />
               </div>
               <div>
                 <p style={{ fontWeight: 600, fontSize: 15, color: "var(--fg-strong)", margin: "0 0 4px" }}>
@@ -387,39 +404,57 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
     <div className="min-h-screen bg-background">
       <div className="max-w-2xl mx-auto px-5 py-8">
         <Button variant="ghost" size="sm" onClick={() => setMode(null)} className="gap-1.5 -ml-2 mb-6 text-muted-foreground hover:text-foreground">
-          <ChevronLeft className="h-4 w-4" /> Practice Mode
+          <ChevronLeft className="h-4 w-4" /> Practice mode
         </Button>
 
-        <div className="mb-6">
+        {/* Header */}
+        <div style={{ marginBottom: 20 }}>
           <span style={{
             fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase",
             fontWeight: 700, color: "var(--amber-700)", background: "var(--amber-50)",
-            padding: "4px 8px", borderRadius: 4,
+            padding: "3px 8px", borderRadius: 4,
           }}>
-            {toLabel(category).toUpperCase()}
+            {toLabel(category)}
           </span>
           <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600,
-            color: "var(--fg-strong)", margin: "12px 0 4px", lineHeight: 1.2 }}>
+            color: "var(--fg-strong)", margin: "10px 0 4px", lineHeight: 1.2 }}>
             Full Dialogue
           </h1>
           <p style={{ fontSize: 14, color: "var(--fg-muted)", margin: 0 }}>
-            Listen to the full dialogue, then record your interpretation.
+            Listen to the full dialogue, then record your interpretation in one take.
           </p>
         </div>
 
-        <Separator className="mb-6" />
-
-        {/* Player card */}
-        <div style={{
-          background: "#fff", border: "1px solid var(--gg-200)",
-          borderRadius: 16, overflow: "hidden",
-          boxShadow: "var(--shadow-sm)", marginBottom: 16,
-        }}>
-          <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--gg-100)" }}>
-            <p style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase",
-              fontWeight: 700, color: "var(--fg-muted)", margin: 0 }}>Reference Audio</p>
+        {/* Scenario card */}
+        {scenario && (
+          <div style={{
+            background: "var(--bg-sunken)", border: "1px solid var(--border-subtle)",
+            borderRadius: 12, padding: "12px 16px", marginBottom: 20,
+            display: "flex", gap: 10, alignItems: "flex-start",
+          }}>
+            <span style={{ fontSize: 16, flexShrink: 0 }}>📋</span>
+            <p style={{ fontSize: 13, color: "var(--fg-default)", margin: 0, lineHeight: 1.55 }}>
+              {scenario}
+            </p>
           </div>
-          <div style={{ padding: "16px 20px", background: "var(--gg-50)" }}>
+        )}
+
+        <Separator style={{ marginBottom: 20 }} />
+
+        {/* Reference audio */}
+        <div style={{
+          background: "var(--bg-surface)", border: "1px solid var(--border-subtle)",
+          borderRadius: 14, overflow: "hidden", marginBottom: 12,
+        }}>
+          <div style={{
+            padding: "10px 16px", borderBottom: "1px solid var(--border-subtle)",
+            display: "flex", alignItems: "center", gap: 8,
+          }}>
+            <Headphones style={{ width: 14, height: 14, color: "var(--fg-muted)" }} />
+            <p style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase",
+              fontWeight: 700, color: "var(--fg-muted)", margin: 0 }}>Reference audio</p>
+          </div>
+          <div style={{ padding: "14px 16px" }}>
             {fullAudioUrl
               ? <AudioPlayer audioUrl={fullAudioUrl} />
               : <p style={{ fontSize: 13, color: "var(--fg-muted)", margin: 0 }}>Audio unavailable.</p>
@@ -427,19 +462,20 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
           </div>
         </div>
 
-        {/* Recorder card */}
+        {/* Recorder */}
         <div style={{
-          background: "#fff", border: "1px solid var(--gg-200)",
-          borderRadius: 16, overflow: "hidden",
-          boxShadow: "var(--shadow-sm)", marginBottom: 24,
+          background: "var(--bg-surface)", border: "1px solid var(--border-subtle)",
+          borderRadius: 14, padding: "16px", marginBottom: 20,
         }}>
-          <div style={{ padding: "16px 20px 20px" }}>
-            <AudioRecorder
-              onRecordingComplete={handleFullRecorded}
-              onReRecordStart={handleFullReRecord}
-              isDisabled={isSubmitting}
-            />
-          </div>
+          <p style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase",
+            fontWeight: 700, color: "var(--fg-muted)", margin: "0 0 12px" }}>
+            Your interpretation
+          </p>
+          <AudioRecorder
+            onRecordingComplete={handleFullRecorded}
+            onReRecordStart={handleFullReRecord}
+            isDisabled={isSubmitting}
+          />
         </div>
 
         {submitError && (
@@ -454,7 +490,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
           disabled={!fullRecording.recorded || isSubmitting}
           style={{
             padding: "11px 28px", borderRadius: 10,
-            background: fullRecording.recorded && !isSubmitting ? "var(--forest-500)" : "var(--gg-200)",
+            background: fullRecording.recorded && !isSubmitting ? "var(--brand)" : "var(--bg-sunken)",
             border: "none",
             color: fullRecording.recorded && !isSubmitting ? "#fff" : "var(--fg-muted)",
             fontFamily: "var(--font-sans)", fontSize: 14, fontWeight: 600,
@@ -464,7 +500,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
             display: "flex", alignItems: "center", gap: 8,
           }}
         >
-          {isSubmitting ? <><Loader2 className="h-4 w-4 animate-spin" />Submitting…</> : "Submit Recording"}
+          {isSubmitting ? <><Loader2 className="h-4 w-4 animate-spin" />Submitting…</> : "Submit recording"}
         </button>
       </div>
     </div>
@@ -478,122 +514,175 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
     <div className="min-h-screen bg-background">
       <div className="max-w-2xl mx-auto px-5 py-8">
         <Button variant="ghost" size="sm" onClick={() => setMode(null)} className="gap-1.5 -ml-2 mb-6 text-muted-foreground hover:text-foreground">
-          <ChevronLeft className="h-4 w-4" /> Practice Mode
+          <ChevronLeft className="h-4 w-4" /> Practice mode
         </Button>
 
-        <div className="mb-5">
+        {/* Header */}
+        <div style={{ marginBottom: 16 }}>
           <span style={{
             fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase",
             fontWeight: 700, color: "var(--amber-700)", background: "var(--amber-50)",
-            padding: "4px 8px", borderRadius: 4,
+            padding: "3px 8px", borderRadius: 4,
           }}>
-            {toLabel(category).toUpperCase()}
+            {toLabel(category)}
           </span>
           <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600,
-            color: "var(--fg-strong)", margin: "12px 0 4px", lineHeight: 1.2 }}>
-            By Segments
+            color: "var(--fg-strong)", margin: "10px 0 4px", lineHeight: 1.2 }}>
+            Segment by segment
           </h1>
           <p style={{ fontSize: 14, color: "var(--fg-muted)", margin: 0 }}>
-            Record your interpretation for each segment in order.
+            Listen and record your interpretation for each segment in order.
           </p>
         </div>
 
-        {/* Segment progress dots */}
-        <div style={{ display: "flex", gap: 4, marginBottom: 20, flexWrap: "wrap", alignItems: "center" }}>
-          {segmentStates.map((seg, i) => (
-            <div
-              key={i}
-              style={{
-                height: 6, flex: "1 1 24px", minWidth: 20, maxWidth: 48,
-                borderRadius: 3,
-                background: seg.recorded
-                  ? "var(--forest-500)"
-                  : i <= currentIndex
-                    ? "var(--forest-200)"
-                    : "var(--gg-200)",
-                transition: "background 0.2s",
-              }}
-            />
-          ))}
-          <span style={{ fontSize: 12, color: "var(--fg-muted)",
-            fontFamily: "var(--font-mono)", marginLeft: 8, flexShrink: 0 }}>
-            {completedCount}/{segmentStates.length}
-          </span>
+        {/* Scenario card */}
+        {scenario && (
+          <div style={{
+            background: "var(--bg-sunken)", border: "1px solid var(--border-subtle)",
+            borderRadius: 12, padding: "12px 16px", marginBottom: 16,
+            display: "flex", gap: 10, alignItems: "flex-start",
+          }}>
+            <span style={{ fontSize: 16, flexShrink: 0 }}>📋</span>
+            <p style={{ fontSize: 13, color: "var(--fg-default)", margin: 0, lineHeight: 1.55 }}>
+              {scenario}
+            </p>
+          </div>
+        )}
+
+        {/* Progress bar */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ display: "flex", gap: 3, marginBottom: 6 }}>
+            {segmentStates.map((seg, i) => (
+              <div
+                key={i}
+                style={{
+                  height: 5, flex: 1, borderRadius: 3,
+                  background: seg.recorded
+                    ? "var(--success)"
+                    : i <= currentIndex
+                      ? "var(--forest-200)"
+                      : "var(--border-subtle)",
+                  transition: "background 0.2s",
+                }}
+              />
+            ))}
+          </div>
+          <p style={{ fontSize: 12, color: "var(--fg-muted)", fontFamily: "var(--font-mono)", margin: 0 }}>
+            {completedCount} of {segmentStates.length} segments recorded
+          </p>
         </div>
 
-        <Separator className="mb-5" />
+        <Separator style={{ marginBottom: 16 }} />
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {segmentStates.map((seg, i) => {
             const segAudioUrl = segmentAudioUrls[i];
+            const transcript = transcriptSegments[i];
             const isUnlocked = i <= currentIndex;
             const isDone = seg.recorded;
+            const fmtTime = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
             return (
               <div
                 key={i}
                 style={{
-                  background: "#fff",
-                  border: `1px solid ${isDone ? "var(--forest-200)" : "var(--gg-200)"}`,
+                  background: "var(--bg-surface)",
+                  border: `1px solid ${isDone ? "var(--forest-200)" : "var(--border-subtle)"}`,
                   borderRadius: 14, overflow: "hidden",
-                  opacity: isUnlocked ? 1 : 0.55,
-                  boxShadow: isDone ? "0 0 0 1px var(--forest-100)" : "none",
+                  opacity: isUnlocked ? 1 : 0.5,
                   transition: "opacity 0.2s, border-color 0.2s",
                 }}
               >
                 {/* Segment header */}
                 <div style={{
                   display: "flex", alignItems: "center", justifyContent: "space-between",
-                  padding: "10px 18px",
-                  background: isDone ? "var(--forest-50)" : "var(--gg-50)",
-                  borderBottom: `1px solid ${isDone ? "var(--forest-100)" : "var(--gg-200)"}`,
+                  padding: "9px 16px",
+                  background: isDone ? "var(--forest-50)" : "var(--bg-sunken)",
+                  borderBottom: `1px solid ${isDone ? "var(--forest-100)" : "var(--border-subtle)"}`,
                 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                     {isDone ? (
-                      <CheckCircle2 style={{ width: 14, height: 14, color: "var(--forest-500)" }} />
+                      <CheckCircle2 style={{ width: 13, height: 13, color: "var(--success)" }} />
                     ) : !isUnlocked ? (
-                      <Lock style={{ width: 14, height: 14, color: "var(--fg-muted)" }} />
+                      <Lock style={{ width: 13, height: 13, color: "var(--fg-muted)" }} />
                     ) : null}
                     <span style={{
-                      fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase",
-                      fontWeight: 700,
-                      color: isDone ? "var(--forest-600)" : isUnlocked ? "var(--fg-strong)" : "var(--fg-muted)",
+                      fontSize: 11, letterSpacing: "0.07em", textTransform: "uppercase", fontWeight: 700,
+                      color: isDone ? "var(--brand)" : isUnlocked ? "var(--fg-strong)" : "var(--fg-muted)",
                     }}>
                       Segment {i + 1}
+                      {transcript?.speaker && (
+                        <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, marginLeft: 6, color: "var(--fg-muted)" }}>
+                          · {transcript.speaker}
+                        </span>
+                      )}
                     </span>
                   </div>
-                  {isDone && (
-                    <span style={{
-                      fontSize: 11, fontWeight: 600, color: "var(--forest-600)",
-                      background: "var(--forest-50)", border: "1px solid var(--forest-200)",
-                      padding: "2px 8px", borderRadius: 20,
-                    }}>
-                      Recorded
-                    </span>
-                  )}
-                  {!isUnlocked && !isDone && (
-                    <span style={{ fontSize: 11, color: "var(--fg-muted)" }}>
-                      Complete segment {i} first
-                    </span>
-                  )}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {transcript && (
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--fg-subtle)" }}>
+                        {fmtTime(transcript.startTime)}–{fmtTime(transcript.endTime)}
+                      </span>
+                    )}
+                    {isDone && (
+                      <span style={{
+                        fontSize: 10, fontWeight: 700, color: "var(--brand)",
+                        background: "var(--forest-50)", border: "1px solid var(--forest-200)",
+                        padding: "2px 7px", borderRadius: 20,
+                      }}>
+                        Recorded
+                      </span>
+                    )}
+                    {!isUnlocked && !isDone && (
+                      <span style={{ fontSize: 11, color: "var(--fg-subtle)" }}>
+                        Locked
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Segment body */}
-                <div style={{ padding: "16px 18px 18px", display: "flex", flexDirection: "column", gap: 16 }}>
+                <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
+
+                  {/* Transcript block — original only (no expected interpretation) */}
+                  {transcript?.original && (
+                    <div style={{
+                      background: "var(--bg-sunken)",
+                      border: "1px solid var(--border-subtle)",
+                      borderRadius: 10, padding: "12px 14px",
+                    }}>
+                      <p style={{
+                        fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase",
+                        fontWeight: 700, color: "var(--fg-subtle)", margin: "0 0 5px",
+                      }}>
+                        {transcript.speaker || "Speaker"}
+                      </p>
+                      <p style={{
+                        fontSize: 15, color: "var(--fg-strong)", margin: 0,
+                        lineHeight: 1.6,
+                        fontFamily: /[\u0900-\u097F]/.test(transcript.original) ? "var(--font-deva)" : "inherit",
+                      }}>
+                        {transcript.original}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Audio player */}
                   {segAudioUrl ? (
                     <div>
-                      <p style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase",
-                        fontWeight: 700, color: "var(--fg-muted)", margin: "0 0 8px" }}>Listen</p>
+                      <p style={{ fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase",
+                        fontWeight: 700, color: "var(--fg-muted)", margin: "0 0 7px" }}>Listen</p>
                       <AudioPlayer audioUrl={segAudioUrl} />
                     </div>
                   ) : (
                     <p style={{ fontSize: 13, color: "var(--fg-muted)", margin: 0 }}>Audio unavailable.</p>
                   )}
 
+                  {/* Recorder */}
                   <div style={{ pointerEvents: isUnlocked ? "auto" : "none" }}>
                     {!isUnlocked && (
                       <p style={{ fontSize: 12, color: "var(--fg-muted)", margin: "0 0 8px" }}>
-                        Locked until previous segment is recorded.
+                        Complete segment {i} first to unlock this.
                       </p>
                     )}
                     <AudioRecorder
@@ -624,7 +713,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
             disabled={!allRecorded || isSubmitting}
             style={{
               padding: "11px 28px", borderRadius: 10,
-              background: allRecorded && !isSubmitting ? "var(--forest-500)" : "var(--gg-200)",
+              background: allRecorded && !isSubmitting ? "var(--brand)" : "var(--bg-sunken)",
               border: "none",
               color: allRecorded && !isSubmitting ? "#fff" : "var(--fg-muted)",
               fontFamily: "var(--font-sans)", fontSize: 14, fontWeight: 600,

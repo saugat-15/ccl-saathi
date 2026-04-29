@@ -13,7 +13,7 @@ import {
 export type CategoryPresentation = {
   label: string;
   icon: LucideIcon;
-  iconWrapClass: string;
+  iconStyle: { background: string; color: string };
 };
 
 /** Default NAATI CCL topic slugs — used for guest preview ordering when API is unavailable. */
@@ -21,53 +21,56 @@ export const DEFAULT_CATEGORY_ORDER: string[] = [
   "health",
   "legal",
   "housing",
-  "employment",
-  "education",
-  "social-services",
-  "financial-1",
-  "financial-2",
+  // "employment",
+  // "education",
+  // "social-services",
+  // "financial-1",
+  // "financial-2",
 ];
 
+// All colours use CSS custom properties so they flip correctly in dark mode.
+// --crimson-*, --marigold-*, --teal-*, --indigo-* are back-compat aliases
+// defined in globals.css with dark-mode overrides.
 const MAP: Record<string, CategoryPresentation> = {
   health: {
     label: "Health",
     icon: Heart,
-    iconWrapClass: "bg-rose-500/15 text-rose-700",
+    iconStyle: { background: "var(--crimson-50)", color: "var(--crimson-600)" },
   },
   legal: {
     label: "Legal",
     icon: Scale,
-    iconWrapClass: "bg-slate-500/15 text-slate-700",
+    iconStyle: { background: "var(--bg-sunken)", color: "var(--fg-subtle)" },
   },
   housing: {
     label: "Housing",
     icon: Home,
-    iconWrapClass: "bg-amber-500/15 text-amber-800",
+    iconStyle: { background: "var(--marigold-50)", color: "var(--marigold-600)" },
   },
   employment: {
     label: "Employment",
     icon: Briefcase,
-    iconWrapClass: "bg-blue-500/15 text-blue-700",
+    iconStyle: { background: "var(--indigo-50)", color: "var(--indigo-500)" },
   },
   education: {
     label: "Education",
     icon: GraduationCap,
-    iconWrapClass: "bg-violet-500/15 text-violet-700",
+    iconStyle: { background: "var(--indigo-50)", color: "var(--indigo-600)" },
   },
   "social-services": {
     label: "Social Services",
     icon: Users,
-    iconWrapClass: "bg-teal-500/15 text-teal-800",
+    iconStyle: { background: "var(--teal-50)", color: "var(--teal-600)" },
   },
   "financial-1": {
     label: "Financial (Set 1)",
     icon: Landmark,
-    iconWrapClass: "bg-emerald-500/15 text-emerald-800",
+    iconStyle: { background: "var(--teal-50)", color: "var(--teal-700)" },
   },
   "financial-2": {
     label: "Financial (Set 2)",
     icon: Landmark,
-    iconWrapClass: "bg-emerald-500/15 text-emerald-700",
+    iconStyle: { background: "var(--teal-50)", color: "var(--teal-600)" },
   },
 };
 
@@ -76,7 +79,7 @@ export function getCategoryPresentation(slug: string): CategoryPresentation {
     MAP[slug] ?? {
       label: slug.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
       icon: BookOpen,
-      iconWrapClass: "bg-primary/15 text-primary",
+      iconStyle: { background: "var(--brand-soft)", color: "var(--brand)" },
     }
   );
 }

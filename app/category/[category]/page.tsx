@@ -135,8 +135,8 @@ export default function CategoryPage({ params }: { params: { category: string } 
                   onClick={() => navigate(d)}
                   className="group"
                   style={{
-                    background: "#fff",
-                    border: "1px solid var(--gg-200)",
+                    background: "var(--bg-surface)",
+                    border: "1px solid var(--border-subtle)",
                     borderRadius: 14, padding: "18px 20px",
                     cursor: "pointer",
                     transition: "all 0.2s cubic-bezier(0.22,1,0.36,1)",
@@ -147,7 +147,7 @@ export default function CategoryPage({ params }: { params: { category: string } 
                     e.currentTarget.style.transform = "translateY(-1px)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "var(--gg-200)";
+                    e.currentTarget.style.borderColor = "var(--border-subtle)";
                     e.currentTarget.style.boxShadow = "none";
                     e.currentTarget.style.transform = "none";
                   }}

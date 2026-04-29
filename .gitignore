@@ -15,6 +15,9 @@ pnpm-lock.yaml
 /.next/
 /out/
 
+scripts/node_modules/
+scripts/output/
+
 # production
 /build
 

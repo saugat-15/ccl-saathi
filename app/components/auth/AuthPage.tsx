@@ -4,6 +4,7 @@ import { useState } from "react";
 import SignInForm from "./SignInForm";
 import SignUpForm from "./SignUpForm";
 import PreviewPanel from "./PreviewPanel";
+import Logo from "../Logo";
 
 type Tab = "signin" | "signup";
 
@@ -11,53 +12,30 @@ export default function AuthPage({ defaultTab = "signin" }: { defaultTab?: Tab }
   const [activeTab, setActiveTab] = useState<Tab>(defaultTab);
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#fff" }}>
-      {/* Left panel */}
-      <div
-        style={{
-          flex: "0 0 460px",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          padding: "3rem 3.5rem",
-        }}
-      >
+    <div className="flex min-h-screen bg-background">
+      {/* Left panel — full width on mobile, fixed 460px on md+ */}
+      <div className="flex flex-col justify-center w-full md:max-w-[460px] md:border-r border-border px-6 py-12 sm:px-10 md:px-14">
         {/* Logo */}
-        <div style={{ marginBottom: "2.5rem" }}>
-          <h1 style={{ fontSize: "2rem", fontWeight: 700, margin: 0 }}>
-            <span style={{ color: "#111827" }}>CCL</span>
-            <span style={{ color: "#16a34a" }}>Saathi</span>
-          </h1>
-          <p style={{ margin: "0.4rem 0 0", color: "#6b7280", fontSize: "0.9rem" }}>
+        <div className="mb-10">
+          <Logo iconSize={36} />
+          <p className="mt-3 text-sm text-muted-foreground">
             NAATI CCL exam practice · AI-powered scoring
           </p>
         </div>
 
         {/* Tabs */}
-        <div
-          style={{
-            display: "flex",
-            gap: "1.5rem",
-            marginBottom: "2rem",
-            borderBottom: "1px solid #e5e7eb",
-          }}
-        >
+        <div className="flex gap-6 mb-8 border-b border-border">
           {(["signin", "signup"] as Tab[]).map((tab) => (
             <button
               key={tab}
+              type="button"
               onClick={() => setActiveTab(tab)}
-              style={{
-                background: "none",
-                border: "none",
-                borderBottom:
-                  activeTab === tab ? "2px solid #16a34a" : "2px solid transparent",
-                padding: "0.5rem 0",
-                marginBottom: "-1px",
-                cursor: "pointer",
-                fontSize: "1rem",
-                fontWeight: 500,
-                color: activeTab === tab ? "#111827" : "#6b7280",
-              }}
+              className={[
+                "pb-2.5 -mb-px text-sm font-medium border-b-2 transition-colors",
+                activeTab === tab
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground",
+              ].join(" ")}
             >
               {tab === "signin" ? "Sign in" : "Sign up"}
             </button>
@@ -71,8 +49,10 @@ export default function AuthPage({ defaultTab = "signin" }: { defaultTab?: Tab }
         )}
       </div>
 
-      {/* Right panel */}
-      <PreviewPanel />
+      {/* Right panel — hidden on mobile */}
+      <div className="hidden md:flex flex-1">
+        <PreviewPanel />
+      </div>
     </div>
   );
 }
