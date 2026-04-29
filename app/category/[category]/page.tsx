@@ -3,9 +3,11 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { list, downloadData } from "aws-amplify/storage";
+import { generateClient } from "aws-amplify/data";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ChevronLeft, Loader2 } from "lucide-react";
+import type { Schema } from "@/amplify/data/resource";
 
 type DialogueEntry = {
   basePath: string;
@@ -15,6 +17,14 @@ type DialogueEntry = {
   scenario: string | null;
   segmentCount: number | null;
 };
+
+type DialogueProgress = {
+  attempted: boolean;
+  completedCount: number;
+  latestOverallScore: number | null;
+};
+
+const client = generateClient<Schema>();
 
 function toLabel(s: string) {
   return s.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -26,6 +36,7 @@ export default function CategoryPage({ params }: { params: { category: string } 
   const categoryLabel = toLabel(category);
 
   const [dialogues, setDialogues] = useState<DialogueEntry[]>([]);
+  const [dialogueProgress, setDialogueProgress] = useState<Record<string, DialogueProgress>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -73,6 +84,49 @@ export default function CategoryPage({ params }: { params: { category: string } 
         enriched.sort((a, b) => a.basePath.localeCompare(b.basePath));
         enriched.forEach((d, i) => { d.label = `Dialogue ${i + 1}`; });
         setDialogues(enriched);
+
+        const progressEntries = await Promise.all(
+          enriched.map(async (dialogue) => {
+            const recordingsResult = await client.models.Recording.list({
+              filter: { dialogueId: { eq: dialogue.basePath } },
+            });
+            if (recordingsResult.errors) {
+              throw new Error(`Failed to load attempts for ${dialogue.basePath}`);
+            }
+
+            const recordings = recordingsResult.data;
+            const completedRecordings = recordings.filter((r) => r.status === "COMPLETED");
+            let latestOverallScore: number | null = null;
+
+            if (completedRecordings.length > 0) {
+              const scored = await Promise.all(
+                completedRecordings.map(async (recording) => {
+                  const feedbackResult = await client.models.Feedback.list({
+                    filter: { recordingId: { eq: recording.id } },
+                  });
+                  if (feedbackResult.errors) return null;
+                  return feedbackResult.data[0] ?? null;
+                }),
+              );
+              const validScores = scored
+                .map((item) => item?.overallScore)
+                .filter((score): score is number => typeof score === "number");
+              if (validScores.length > 0) {
+                latestOverallScore = validScores[validScores.length - 1];
+              }
+            }
+
+            return [
+              dialogue.basePath,
+              {
+                attempted: recordings.length > 0,
+                completedCount: completedRecordings.length,
+                latestOverallScore,
+              },
+            ] as const;
+          }),
+        );
+        setDialogueProgress(Object.fromEntries(progressEntries));
       } catch {
         setLoadError("Failed to load dialogues.");
       } finally {
@@ -83,7 +137,7 @@ export default function CategoryPage({ params }: { params: { category: string } 
   }, [category]);
 
   function navigate(d: DialogueEntry) {
-    router.push(`/practice/${encodeURIComponent(btoa(d.basePath))}`);
+    router.push(`/category/${category}/dialogue/${encodeURIComponent(btoa(d.basePath))}`);
   }
 
   return (
@@ -195,7 +249,11 @@ export default function CategoryPage({ params }: { params: { category: string } 
                       <span>{d.segmentCount} segments</span>
                     )}
                     <span style={{ marginLeft: "auto", fontFamily: "var(--font-serif)", fontWeight: 600, fontSize: 13, color: "var(--fg-muted)" }}>
-                      Not attempted
+                      {dialogueProgress[d.basePath]?.attempted
+                        ? dialogueProgress[d.basePath]?.latestOverallScore !== null
+                          ? `Score ${Math.round(dialogueProgress[d.basePath].latestOverallScore as number)}`
+                          : "Attempted"
+                        : "Not attempted"}
                     </span>
                   </div>
                 </div>

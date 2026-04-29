@@ -80,7 +80,7 @@ const schema = a.schema({
     recording: a.belongsTo('Recording', 'recordingId'),
   })
     .authorization(allow => [
-      allow.owner(),
+      allow.ownerDefinedIn('userId'),
       allow.group('admin'),
     ]),
 
@@ -105,7 +105,7 @@ const schema = a.schema({
     recording: a.belongsTo('Recording', 'recordingId'),
   })
     .authorization(allow => [
-      allow.owner(),
+      allow.ownerDefinedIn('userId'),
       allow.group('admin'),
     ]),
 
