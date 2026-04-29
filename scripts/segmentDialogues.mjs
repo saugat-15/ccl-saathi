@@ -1011,7 +1011,7 @@ const main = async () => {
 
   const results = [];
 
-  for (const dialogue of dialoguesToProcess) {
+  for (const dialogue of dialoguesToProcess.slice(0, 1)) {
     try {
       const result = await processDialogue(dialogue);
       results.push({
