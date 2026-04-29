@@ -215,7 +215,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      if (!allRecorded) throw new Error("Please record all segments before submitting.");
+      // if (!allRecorded) throw new Error("Please record all segments before submitting.");
       const { userId } = await getCurrentUser();
       const { identityId } = await fetchAuthSession();
       if (!identityId) throw new Error("Could not determine identity. Please sign out and sign in again.");
@@ -230,7 +230,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
         if (errors || !recording) throw new Error(`Failed to create record for segment ${i + 1}.`);
 
         const ext = seg.mimeType.includes("webm") ? "webm" : "mp4";
-        const s3Key = `recordings/${identityId}/${recording.id}.${ext}`;
+        const s3Key = `protected/${identityId}/recordings/${recording.id}.${ext}`;
         await uploadData({ path: s3Key, data: seg.blob, options: { contentType: seg.mimeType } }).result;
         await client.models.Recording.update({ id: recording.id, s3Key });
       }
@@ -520,7 +520,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <button
             onClick={() => handleSubmit(segmentStates)}
-            disabled={!allRecorded || isSubmitting}
+            disabled={isSubmitting}
             style={{
               padding: "11px 28px", borderRadius: 10,
               background: allRecorded && !isSubmitting ? "var(--brand)" : "var(--bg-sunken)",

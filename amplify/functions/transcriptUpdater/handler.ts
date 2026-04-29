@@ -119,11 +119,15 @@ function isS3UploadEvent(event: unknown): event is S3EventNotification {
     return Array.isArray(records);
 }
 
+let client: ReturnType<typeof generateClient<Schema>>;
+
 async function configureDataClient() {
     if (configured) return;
-    const endpoint = process.env.AMPLIFY_DATA_GRAPHQL_ENDPOINT;
+    const endpoint =
+        process.env.AMPLIFY_DATA_GRAPHQL_ENDPOINT ??
+        (typeof amplifyOutputs.data?.url === 'string' ? amplifyOutputs.data.url : undefined);
     if (!endpoint) {
-        throw new Error('AMPLIFY_DATA_GRAPHQL_ENDPOINT is not set');
+        throw new Error('AMPLIFY_DATA_GRAPHQL_ENDPOINT is not set and no data.url found');
     }
     Amplify.configure(
         {
@@ -153,9 +157,8 @@ async function configureDataClient() {
         },
     );
     configured = true;
+    client = generateClient<Schema>();
 }
-
-const client = generateClient<Schema>();
 
 async function readTranscriptPayload(
     bucket: string,

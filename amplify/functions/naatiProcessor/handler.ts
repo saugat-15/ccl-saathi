@@ -7,6 +7,10 @@ import {
     GetSecretValueCommand,
     SecretsManagerClient,
 } from '@aws-sdk/client-secrets-manager';
+import { Amplify } from 'aws-amplify';
+import { generateClient } from 'aws-amplify/data';
+import type { Schema } from '../../data/resource.js';
+import amplifyOutputs from '../../../amplify_outputs.json';
 
 type S3Record = {
     s3: {
@@ -69,20 +73,34 @@ function decodeObjectKey(key: string): string {
 }
 
 /**
- * Expects `recordings/{cognitoSub}/{recordingId}.mp3` (same layout as naati-user-recordings/{cognitoId}/…).
+ * Handles two key shapes:
+ *   protected/{identityId}/recordings/{recordingId}.ext  (Amplify Storage upload path)
+ *   recordings/{cognitoId}/{recordingId}.ext             (legacy)
  */
 function parseRecordingKey(key: string): { cognitoId: string; recordingId: string } | undefined {
     const segments = key.split('/').filter(Boolean);
-    if (segments.length < 3 || segments[0] !== 'recordings') {
-        return undefined;
+
+    // protected/{identityId}/recordings/{recordingId}.ext
+    if (segments[0] === 'protected' && segments[2] === 'recordings' && segments.length >= 4) {
+        const cognitoId = segments[1];
+        const fileName = segments.at(-1) ?? '';
+        const recordingId = fileName.replace(/\.[^/.]+$/, '');
+        if (cognitoId && recordingId) {
+            return { cognitoId, recordingId };
+        }
     }
-    const cognitoId = segments[1];
-    const fileName = segments.at(-1) ?? '';
-    const recordingId = fileName.replace(/\.[^/.]+$/, '');
-    if (!cognitoId || !recordingId) {
-        return undefined;
+
+    // recordings/{cognitoId}/{recordingId}.ext
+    if (segments[0] === 'recordings' && segments.length >= 3) {
+        const cognitoId = segments[1];
+        const fileName = segments.at(-1) ?? '';
+        const recordingId = fileName.replace(/\.[^/.]+$/, '');
+        if (cognitoId && recordingId) {
+            return { cognitoId, recordingId };
+        }
     }
-    return { cognitoId, recordingId };
+
+    return undefined;
 }
 
 function normalizeOutputPrefix(prefix: string): string {
@@ -274,6 +292,50 @@ type ProcessResult = {
     error?: string;
 };
 
+let amplifyConfigured = false;
+let dataClient: ReturnType<typeof generateClient<Schema>>;
+
+function getDataClient(): ReturnType<typeof generateClient<Schema>> | undefined {
+    if (amplifyConfigured) return dataClient;
+    const endpoint =
+        process.env.AMPLIFY_DATA_GRAPHQL_ENDPOINT ??
+        (typeof amplifyOutputs.data?.url === 'string' ? amplifyOutputs.data.url : undefined);
+    if (!endpoint) {
+        console.warn('AMPLIFY_DATA_GRAPHQL_ENDPOINT is not set and no data.url found; skipping Recording status updates');
+        return undefined;
+    }
+    Amplify.configure(
+        {
+            API: {
+                GraphQL: {
+                    endpoint,
+                    region: process.env.AWS_REGION ?? 'ap-southeast-2',
+                    defaultAuthMode: 'iam',
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    modelIntrospection: amplifyOutputs.data.model_introspection as any,
+                },
+            },
+        },
+        {
+            Auth: {
+                credentialsProvider: {
+                    getCredentialsAndIdentityId: async () => ({
+                        credentials: {
+                            accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+                            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+                            sessionToken: process.env.AWS_SESSION_TOKEN,
+                        },
+                    }),
+                    clearCredentialsAndIdentityId: () => { /* noop */ },
+                },
+            },
+        },
+    );
+    amplifyConfigured = true;
+    dataClient = generateClient<Schema>();
+    return dataClient;
+}
+
 export const handler = async (
     event: unknown,
     context: { awsRequestId: string },
@@ -316,8 +378,8 @@ export const handler = async (
             continue;
         }
 
-        if (!key.startsWith('recordings/')) {
-            console.info('Ignoring S3 object outside recordings/', { key });
+        if (!key.startsWith('recordings/') && !key.startsWith('protected/')) {
+            console.info('Ignoring S3 object outside recordings/ or protected/', { key });
             continue;
         }
 
@@ -339,6 +401,12 @@ export const handler = async (
 
         const fileName = key.split('/').at(-1) ?? key;
         const outKey = transcriptOutputKey(outputPrefix, recordingId);
+        const db = getDataClient();
+
+        if (db) {
+            await db.models.Recording.update({ id: recordingId, status: 'PROCESSING', errorMessage: null });
+            console.info('Recording marked as PROCESSING', { recordingId });
+        }
 
         let apiKey: string;
         try {
@@ -346,6 +414,9 @@ export const handler = async (
         } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
             console.error('OpenAI API key unavailable', { message });
+            if (db) {
+                await db.models.Recording.update({ id: recordingId, status: 'FAILED', errorMessage: message });
+            }
             results.push({ recordingId, sourceKey: key, error: message });
             continue;
         }
@@ -361,6 +432,9 @@ export const handler = async (
         } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
             console.error('Failed to read recording from S3', { key, message });
+            if (db) {
+                await db.models.Recording.update({ id: recordingId, status: 'FAILED', errorMessage: message });
+            }
             results.push({ recordingId, sourceKey: key, error: message });
             continue;
         }
@@ -385,6 +459,9 @@ export const handler = async (
                 message,
                 stack: err instanceof Error ? err.stack : undefined,
             });
+            if (db) {
+                await db.models.Recording.update({ id: recordingId, status: 'FAILED', errorMessage: message });
+            }
             results.push({ recordingId, sourceKey: key, error: message });
         }
     }

@@ -39,7 +39,6 @@
  */
 
 import fs from "fs";
-import os from "os";
 import path from "path";
 import { spawnSync } from "child_process";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
@@ -239,11 +238,36 @@ const validatePdfExtraction = (data) => {
 };
 
 // ─── Step 1: Extract segments from PDF ────────────────────
-const extractionSystemPrompt = `You are a data extraction assistant specialising in NAATI CCL bilingual dialogue transcripts.
-Return one JSON object only (no markdown, no code fences, no commentary).
-Preserve Devanagari exactly as in the source. Escape characters in JSON strings as required (e.g. quotes, backslashes, control characters).`;
+const extractSegmentsFromPdf = async (pdfPath) => {
+  console.log(`  📄 Extracting text from PDF: ${path.basename(pdfPath)}`);
 
-const extractionUserPrompt = `Extract all numbered dialogue rows from this NAATI CCL English-Nepali transcript into JSON with this shape:
+  const pdfBuffer = fs.readFileSync(pdfPath);
+  const { PDFParse } = await import("pdf-parse");
+  const parser = new PDFParse({ data: pdfBuffer });
+  let pdfText;
+  try {
+    const textResult = await parser.getText();
+    pdfText = textResult.text;
+  } finally {
+    await parser.destroy();
+  }
+
+  console.log(
+    `  📝 ${pdfText.length} characters extracted — sending to GPT-4o`,
+  );
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      {
+        role: "system",
+        content: `You are a data extraction assistant specialising in NAATI CCL bilingual dialogue transcripts.
+Return one JSON object only (no markdown, no code fences, no commentary).
+Preserve Devanagari exactly as in the source. Escape characters in JSON strings as required (e.g. quotes, backslashes, control characters).`,
+      },
+      {
+        role: "user",
+        content: `Extract all numbered dialogue rows from this NAATI CCL English-Nepali transcript into JSON with this shape:
 - domain: string (e.g. Employment)
 - scenario: string, one sentence
 - segments: array ordered by segmentIndex ascending. Each item:
@@ -259,17 +283,27 @@ Rules:
 - speaker "EN" / "NE" as above
 - keyTerms: domain terms a NAATI marker would expect
 - Include every numbered segment; omit unnumbered intro/scenario text
-- Do not duplicate keys or repeat the same object inside segments`;
+- Do not duplicate keys or repeat the same object inside segments
 
-const parseExtractionResponse = (response) => {
+PDF transcript:
+${pdfText}`,
+      },
+    ],
+    max_completion_tokens: 16_384,
+    temperature: 0.2,
+    response_format: { type: "json_object" },
+  });
+
   const choice = response.choices[0];
   const raw = choice?.message?.content ?? "";
   if (choice?.finish_reason === "length") {
     console.warn(
-      "  ⚠️  GPT stopped at output limit — raise max_completion_tokens or shorten input",
+      "  ⚠️  GPT stopped at output limit — raise max_completion_tokens or shorten PDF text",
     );
   }
+
   const clean = raw.replace(/```json|```/g, "").trim();
+
   try {
     return validatePdfExtraction(JSON.parse(clean));
   } catch (parseErr) {
@@ -281,123 +315,6 @@ const parseExtractionResponse = (response) => {
       );
     }
     throw parseErr;
-  }
-};
-
-const renderPdfPagesToPng = (pdfPath, maxPages = 12) => {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "naati-pdf-"));
-  const outputPrefix = path.join(tmpDir, "page");
-  const result = spawnSync(
-    "pdftoppm",
-    ["-png", "-f", "1", "-singlefile", pdfPath, outputPrefix],
-    { encoding: "utf-8" },
-  );
-
-  // Retry full multi-page export if singlefile route not supported by local pdftoppm.
-  if (result.status !== 0 || result.error) {
-    const fallback = spawnSync(
-      "pdftoppm",
-      ["-png", "-f", "1", "-l", String(maxPages), pdfPath, outputPrefix],
-      { encoding: "utf-8" },
-    );
-    if (fallback.status !== 0 || fallback.error) {
-      const detail =
-        (fallback.stderr && fallback.stderr.trim()) ||
-        (result.stderr && result.stderr.trim()) ||
-        (fallback.error && fallback.error.message) ||
-        (result.error && result.error.message) ||
-        "unknown pdftoppm failure";
-      throw new Error(`pdftoppm failed: ${detail}`);
-    }
-  }
-
-  const files = fs
-    .readdirSync(tmpDir)
-    .filter((f) => f.endsWith(".png"))
-    .map((f) => path.join(tmpDir, f))
-    .sort((a, b) => a.localeCompare(b))
-    .slice(0, maxPages);
-
-  if (files.length === 0) {
-    throw new Error("No rendered PNG pages found from PDF");
-  }
-  return { tmpDir, files };
-};
-
-const extractSegmentsFromPdfVision = async (pdfPath) => {
-  const { tmpDir, files } = renderPdfPagesToPng(pdfPath);
-  try {
-    console.log(`  🖼️  Rendered ${files.length} page image(s) — sending to GPT-4o vision`);
-    const content = [
-      {
-        type: "text",
-        text: `${extractionUserPrompt}\n\nRead directly from these page images. Focus on the table rows under No/Speakers/Segments/Words and Translation lines.`,
-      },
-      ...files.map((filePath) => {
-        const base64 = fs.readFileSync(filePath).toString("base64");
-        return {
-          type: "image_url",
-          image_url: { url: `data:image/png;base64,${base64}` },
-        };
-      }),
-    ];
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        { role: "system", content: extractionSystemPrompt },
-        { role: "user", content },
-      ],
-      max_completion_tokens: 16_384,
-      temperature: 0.2,
-      response_format: { type: "json_object" },
-    });
-    return parseExtractionResponse(response);
-  } finally {
-    try {
-      fs.rmSync(tmpDir, { recursive: true, force: true });
-    } catch {
-      // ignore cleanup errors
-    }
-  }
-};
-
-const extractSegmentsFromPdfText = async (pdfPath) => {
-  console.log(`  📄 Extracting text from PDF: ${path.basename(pdfPath)}`);
-  const pdfBuffer = fs.readFileSync(pdfPath);
-  const { PDFParse } = await import("pdf-parse");
-  const parser = new PDFParse({ data: pdfBuffer });
-  let pdfText;
-  try {
-    const textResult = await parser.getText();
-    pdfText = textResult.text;
-  } finally {
-    await parser.destroy();
-  }
-  console.log(`  📝 ${pdfText.length} characters extracted — sending to GPT-4o text`);
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o",
-    messages: [
-      { role: "system", content: extractionSystemPrompt },
-      { role: "user", content: `${extractionUserPrompt}\n\nPDF transcript:\n${pdfText}` },
-    ],
-    max_completion_tokens: 16_384,
-    temperature: 0.2,
-    response_format: { type: "json_object" },
-  });
-  return parseExtractionResponse(response);
-};
-
-const extractSegmentsFromPdf = async (pdfPath) => {
-  try {
-    return await extractSegmentsFromPdfVision(pdfPath);
-  } catch (err) {
-    console.warn(
-      `  ⚠️  Vision extraction failed, falling back to text extraction: ${
-        err instanceof Error ? err.message : String(err)
-      }`,
-    );
-    return extractSegmentsFromPdfText(pdfPath);
   }
 };
 
@@ -887,18 +804,12 @@ const dirHasMp3Segments = (segmentsDir) => {
 const uploadDialogueToS3 = async (
   dialogue,
   referenceJson,
-  pdfPath,
   mp3Path,
   segmentsOut,
   referenceJsonPath,
 ) => {
   console.log(`  ☁️  Uploading to S3...`);
 
-  await uploadToS3(
-    pdfPath,
-    `dialogues/${dialogue.id}/original.pdf`,
-    "application/pdf",
-  );
   await uploadToS3(mp3Path, `dialogues/${dialogue.id}/full.mp3`, "audio/mpeg");
 
   for (const seg of referenceJson.segments) {
@@ -965,7 +876,6 @@ const processDialogue = async (dialogue) => {
     await uploadDialogueToS3(
       dialogue,
       referenceJson,
-      pdfPath,
       mp3Path,
       segmentsOut,
       referenceJsonPath,
@@ -1050,7 +960,6 @@ const processDialogue = async (dialogue) => {
   await uploadDialogueToS3(
     dialogue,
     referenceJson,
-    pdfPath,
     mp3Path,
     segmentsOut,
     referenceJsonPath,

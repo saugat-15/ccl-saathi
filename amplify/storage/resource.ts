@@ -8,6 +8,7 @@ export const cclStorage = defineStorage({
         'dialogues/*': [
             allow.authenticated.to(['read']), // authenticated users can read dialogues
             allow.resource(naatiProcessor).to(['read']), // Lambda can read (reference transcripts)
+            allow.resource(transcriptUpdater).to(['read']),
         ],
         'protected/{entity_id}/*': [
             allow.entity('identity').to(['read', 'write', 'delete']), // user owns their recordings under protected identity scope
@@ -15,10 +16,8 @@ export const cclStorage = defineStorage({
             allow.resource(transcriptUpdater).to(['read']),
         ],
         'naati-transcriptions/*': [
-            allow.resource(naatiProcessor).to(['read', 'write']), // Whisper transcript.json per recording
+            allow.resource(naatiProcessor).to(['read', 'write']),
+            allow.resource(transcriptUpdater).to(['read']),
         ],
     }),
-    triggers: {
-        onUpload: naatiProcessor,
-    },
 });
