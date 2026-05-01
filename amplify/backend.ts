@@ -1,6 +1,4 @@
 import { defineBackend } from '@aws-amplify/backend';
-import * as appsync from 'aws-cdk-lib/aws-appsync';
-import { GraphqlApi } from 'aws-cdk-lib/aws-appsync';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { EventType } from 'aws-cdk-lib/aws-s3';
 import { LambdaDestination } from 'aws-cdk-lib/aws-s3-notifications';

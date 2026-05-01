@@ -1,5 +1,4 @@
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
-import { testFunction } from '../functions/test-function/resource.js';
 import { naatiProcessor } from '../functions/naatiProcessor/resource.js';
 import { transcriptUpdater } from '../functions/transcriptUpdater/resource.js';
 
@@ -112,7 +111,6 @@ const schema = a.schema({
     ]),
 
 }).authorization((allow) => [
-  allow.resource(testFunction),
   allow.resource(naatiProcessor),
   allow.resource(transcriptUpdater),
 ]);
