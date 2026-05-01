@@ -122,8 +122,19 @@ const { resourceConfig, libraryOptions } = await getAmplifyDataClientConfig(
     env as typeof env & { AMPLIFY_DATA_DEFAULT_NAME: string },
 );
 
-Amplify.configure(resourceConfig, libraryOptions);
-const client = generateClient<Schema>();
+const intialiseDataClient = async () => {
+    try {
+        const { resourceConfig, libraryOptions } = await getAmplifyDataClientConfig(
+            env as typeof env & { AMPLIFY_DATA_DEFAULT_NAME: string },
+        );
+
+        Amplify.configure(resourceConfig, libraryOptions);
+        return generateClient<Schema>();
+    } catch (error) {
+        console.error('Failed to initialise data client', { error });
+        throw error;
+    }
+};
 
 async function readTranscriptPayload(
     bucket: string,
@@ -292,9 +303,9 @@ function parseScoreReport(value: unknown): ScoreReport {
         examReadiness: {
             level:
                 examReadiness.level === 'not_ready' ||
-                examReadiness.level === 'developing' ||
-                examReadiness.level === 'borderline' ||
-                examReadiness.level === 'ready'
+                    examReadiness.level === 'developing' ||
+                    examReadiness.level === 'borderline' ||
+                    examReadiness.level === 'ready'
                     ? examReadiness.level
                     : 'not_ready',
             reason: typeof examReadiness.reason === 'string' ? examReadiness.reason : '',
@@ -490,6 +501,16 @@ async function getOpenAiApiKey(): Promise<string> {
 
 export const handler = async (event: unknown): Promise<{ statusCode: number; body: string }> => {
     const handlerStartedAt = Date.now();
+    let dataClient: ReturnType<typeof generateClient<Schema>>;
+    try {
+        dataClient = await intialiseDataClient();
+    } catch (error) {
+        console.error('Failed to initialise data client', { error });
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ error: 'Failed to initialise data client' }),
+        };
+    }
     if (!isS3UploadEvent(event)) {
         return {
             statusCode: 400,
@@ -530,11 +551,10 @@ export const handler = async (event: unknown): Promise<{ statusCode: number; bod
             });
 
             const recordingLookupStartedAt = Date.now();
-            const recordingGet = await client.models.Recording.get({ id: recordingId });
+            const recordingGet = await dataClient.models.Recording.get({ id: recordingId });
             if (recordingGet.errors || !recordingGet.data) {
                 throw new Error(
-                    `Recording lookup failed: ${
-                        recordingGet.errors?.map((e) => e.message).join(', ') ?? 'not found'
+                    `Recording lookup failed: ${recordingGet.errors?.map((e: any) => e.message).join(', ') ?? 'not found'
                     }`,
                 );
             }
@@ -545,7 +565,7 @@ export const handler = async (event: unknown): Promise<{ statusCode: number; bod
                 elapsedMs: elapsedMs(recordingLookupStartedAt),
             });
 
-            const recordingUpdateToScoring = await client.models.Recording.update({
+            const recordingUpdateToScoring = await dataClient.models.Recording.update({
                 id: recordingId,
                 status: 'SCORING',
                 errorMessage: null,
@@ -559,7 +579,7 @@ export const handler = async (event: unknown): Promise<{ statusCode: number; bod
 
             const transcriptionId = `tr-${recordingId}`;
             const transcriptionUpdateStartedAt = Date.now();
-            const transcriptionUpdate = await client.models.Transcription.update({
+            const transcriptionUpdate = await dataClient.models.Transcription.update({
                 id: transcriptionId,
                 recordingId,
                 userId: recordingGet.data.userId,
@@ -576,7 +596,7 @@ export const handler = async (event: unknown): Promise<{ statusCode: number; bod
                 });
             } else {
                 const transcriptionCreateStartedAt = Date.now();
-                const transcriptionCreate = await client.models.Transcription.create({
+                const transcriptionCreate = await dataClient.models.Transcription.create({
                     id: transcriptionId,
                     recordingId,
                     userId: recordingGet.data.userId,
@@ -667,7 +687,7 @@ export const handler = async (event: unknown): Promise<{ statusCode: number; bod
                 ),
             };
             const feedbackUpdateStartedAt = Date.now();
-            const feedbackUpdate = await client.models.Feedback.update(feedbackPayload);
+            const feedbackUpdate = await dataClient.models.Feedback.update(feedbackPayload);
             if (!feedbackUpdate.errors && feedbackUpdate.data) {
                 console.info('Updated feedback row', {
                     recordingId,
@@ -676,7 +696,7 @@ export const handler = async (event: unknown): Promise<{ statusCode: number; bod
                 });
             } else {
                 const feedbackCreateStartedAt = Date.now();
-                const feedbackCreate = await client.models.Feedback.create(feedbackPayload);
+                const feedbackCreate = await dataClient.models.Feedback.create(feedbackPayload);
                 if (feedbackCreate.errors) {
                     throw new Error(
                         `Feedback create failed: ${feedbackCreate.errors.map((e) => e.message).join(', ')}`,
@@ -689,7 +709,7 @@ export const handler = async (event: unknown): Promise<{ statusCode: number; bod
                 });
             }
 
-            const recordingUpdate = await client.models.Recording.update({
+            const recordingUpdate = await dataClient.models.Recording.update({
                 id: recordingId,
                 status: 'COMPLETED',
                 errorMessage: null,
@@ -707,7 +727,7 @@ export const handler = async (event: unknown): Promise<{ statusCode: number; bod
             results.push({ key, recordingId });
         } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
-            await client.models.Recording.update({
+            await dataClient.models.Recording.update({
                 id: recordingId,
                 status: 'FAILED',
                 errorMessage: message,

@@ -293,17 +293,36 @@ type ProcessResult = {
     error?: string;
 };
 
-const { resourceConfig, libraryOptions } = await getAmplifyDataClientConfig(
-    env as typeof env & { AMPLIFY_DATA_DEFAULT_NAME: string },
-);
+const intialiseDataClient = async () => {
+    try {
+        const { resourceConfig, libraryOptions } = await getAmplifyDataClientConfig(
+            env as typeof env & { AMPLIFY_DATA_DEFAULT_NAME: string },
+        );
 
-Amplify.configure(resourceConfig, libraryOptions);
-const dataClient = generateClient<Schema>();
+        Amplify.configure(resourceConfig, libraryOptions);
+        return generateClient<Schema>();
+    } catch (error) {
+        console.error('Failed to initialise data client', { error });
+        throw error;
+    }
+};
+
+const s3Client = new S3Client({});
 
 export const handler = async (
     event: unknown,
     context: { awsRequestId: string },
 ): Promise<{ statusCode: number; body: string }> => {
+    let dataClient: ReturnType<typeof generateClient<Schema>>;
+    try {
+        dataClient = await intialiseDataClient();
+    } catch (error) {
+        console.error('Failed to initialise data client', { error });
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ error: 'Failed to initialise data client' }),
+        };
+    }
 
     const outputPrefix = normalizeOutputPrefix(
         process.env.TRANSCRIBE_OUTPUT_PREFIX ?? 'naati-transcriptions/',
@@ -325,7 +344,6 @@ export const handler = async (
         };
     }
 
-    const s3Client = new S3Client({});
     const results: ProcessResult[] = [];
 
     console.info('Processing S3 records', { recordCount: event.Records.length });
