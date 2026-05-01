@@ -10,6 +10,7 @@ export const transcriptUpdater = defineFunction({
     timeoutSeconds: 120,
     memoryMB: 512,
     runtime: 20,
+    resourceGroupName: 'transcriptUpdater',
     environment: {
         TRANSCRIPT_PREFIX: 'naati-transcriptions/',
         OPENAI_SCORER_MODEL: 'gpt-4.1-mini',

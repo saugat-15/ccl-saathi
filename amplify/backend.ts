@@ -58,15 +58,11 @@ bucket.addEventNotification(
 
 // ── AppSync access ────────────────────────────────────────────────────────────
 
-const graphqlApi = backend.data.resources.graphqlApi as GraphqlApi;
+
 
 // naatiProcessor updates Recording.status (PROCESSING / FAILED)
-graphqlApi.grant(processorLambda, appsync.IamResource.all(), 'appsync:GraphQL');
-processorLambda.addEnvironment('AMPLIFY_DATA_GRAPHQL_ENDPOINT', graphqlApi.graphqlUrl);
 
 // transcriptUpdater creates Transcription row and marks Recording COMPLETED
-graphqlApi.grant(updaterLambda, appsync.IamResource.all(), 'appsync:GraphQL');
-updaterLambda.addEnvironment('AMPLIFY_DATA_GRAPHQL_ENDPOINT', graphqlApi.graphqlUrl);
 updaterLambda.addEnvironment('OPENAI_SECRET_ID', 'OpenAI_API_KEY');
 
 updaterLambda.addToRolePolicy(

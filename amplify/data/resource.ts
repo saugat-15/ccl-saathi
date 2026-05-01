@@ -1,4 +1,7 @@
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
+import { testFunction } from '../functions/test-function/resource.js';
+import { naatiProcessor } from '../functions/naatiProcessor/resource.js';
+import { transcriptUpdater } from '../functions/transcriptUpdater/resource.js';
 
 const schema = a.schema({
 
@@ -108,7 +111,11 @@ const schema = a.schema({
       allow.group('admin'),
     ]),
 
-});
+}).authorization((allow) => [
+  allow.resource(testFunction),
+  allow.resource(naatiProcessor),
+  allow.resource(transcriptUpdater),
+]);
 
 export type Schema = ClientSchema<typeof schema>;
 

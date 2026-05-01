@@ -1,10 +1,10 @@
+import { getAmplifyDataClientConfig } from '@aws-amplify/backend/function/runtime';
 import { Amplify } from 'aws-amplify';
 import { generateClient } from 'aws-amplify/data';
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { GetSecretValueCommand, SecretsManagerClient } from '@aws-sdk/client-secrets-manager';
 import { env } from '$amplify/env/transcriptUpdater';
 import type { Schema } from '../../data/resource';
-import amplifyOutputs from '../../../amplify_outputs.json';
 
 type S3Record = {
     s3: {
@@ -70,7 +70,6 @@ type ScoreReport = {
 };
 
 const s3Client = new S3Client({});
-let configured = false;
 let cachedOpenAiApiKey: string | undefined;
 
 function elapsedMs(start: number): number {
@@ -119,46 +118,12 @@ function isS3UploadEvent(event: unknown): event is S3EventNotification {
     return Array.isArray(records);
 }
 
-let client: ReturnType<typeof generateClient<Schema>>;
+const { resourceConfig, libraryOptions } = await getAmplifyDataClientConfig(
+    env as typeof env & { AMPLIFY_DATA_DEFAULT_NAME: string },
+);
 
-async function configureDataClient() {
-    if (configured) return;
-    const endpoint =
-        process.env.AMPLIFY_DATA_GRAPHQL_ENDPOINT ??
-        (typeof amplifyOutputs.data?.url === 'string' ? amplifyOutputs.data.url : undefined);
-    if (!endpoint) {
-        throw new Error('AMPLIFY_DATA_GRAPHQL_ENDPOINT is not set and no data.url found');
-    }
-    Amplify.configure(
-        {
-            API: {
-                GraphQL: {
-                    endpoint,
-                    region: process.env.AWS_REGION ?? 'ap-southeast-2',
-                    defaultAuthMode: 'iam',
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    modelIntrospection: amplifyOutputs.data.model_introspection as any,
-                },
-            },
-        },
-        {
-            Auth: {
-                credentialsProvider: {
-                    getCredentialsAndIdentityId: async () => ({
-                        credentials: {
-                            accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-                            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-                            sessionToken: process.env.AWS_SESSION_TOKEN,
-                        },
-                    }),
-                    clearCredentialsAndIdentityId: () => { /* noop */ },
-                },
-            },
-        },
-    );
-    configured = true;
-    client = generateClient<Schema>();
-}
+Amplify.configure(resourceConfig, libraryOptions);
+const client = generateClient<Schema>();
 
 async function readTranscriptPayload(
     bucket: string,
@@ -532,7 +497,6 @@ export const handler = async (event: unknown): Promise<{ statusCode: number; bod
         };
     }
 
-    await configureDataClient();
     const transcriptPrefix = env.TRANSCRIPT_PREFIX ?? 'naati-transcriptions/';
     const results: Array<{ key: string; recordingId?: string; error?: string }> = [];
     console.info('Transcript updater started', {

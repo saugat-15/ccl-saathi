@@ -7,10 +7,11 @@ import {
     GetSecretValueCommand,
     SecretsManagerClient,
 } from '@aws-sdk/client-secrets-manager';
+import { getAmplifyDataClientConfig } from '@aws-amplify/backend/function/runtime';
 import { Amplify } from 'aws-amplify';
 import { generateClient } from 'aws-amplify/data';
+import { env } from '$amplify/env/naati-processor.js';
 import type { Schema } from '../../data/resource.js';
-import amplifyOutputs from '../../../amplify_outputs.json';
 
 type S3Record = {
     s3: {
@@ -292,49 +293,12 @@ type ProcessResult = {
     error?: string;
 };
 
-let amplifyConfigured = false;
-let dataClient: ReturnType<typeof generateClient<Schema>>;
+const { resourceConfig, libraryOptions } = await getAmplifyDataClientConfig(
+    env as typeof env & { AMPLIFY_DATA_DEFAULT_NAME: string },
+);
 
-function getDataClient(): ReturnType<typeof generateClient<Schema>> | undefined {
-    if (amplifyConfigured) return dataClient;
-    const endpoint =
-        process.env.AMPLIFY_DATA_GRAPHQL_ENDPOINT ??
-        (typeof amplifyOutputs.data?.url === 'string' ? amplifyOutputs.data.url : undefined);
-    if (!endpoint) {
-        console.warn('AMPLIFY_DATA_GRAPHQL_ENDPOINT is not set and no data.url found; skipping Recording status updates');
-        return undefined;
-    }
-    Amplify.configure(
-        {
-            API: {
-                GraphQL: {
-                    endpoint,
-                    region: process.env.AWS_REGION ?? 'ap-southeast-2',
-                    defaultAuthMode: 'iam',
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    modelIntrospection: amplifyOutputs.data.model_introspection as any,
-                },
-            },
-        },
-        {
-            Auth: {
-                credentialsProvider: {
-                    getCredentialsAndIdentityId: async () => ({
-                        credentials: {
-                            accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-                            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-                            sessionToken: process.env.AWS_SESSION_TOKEN,
-                        },
-                    }),
-                    clearCredentialsAndIdentityId: () => { /* noop */ },
-                },
-            },
-        },
-    );
-    amplifyConfigured = true;
-    dataClient = generateClient<Schema>();
-    return dataClient;
-}
+Amplify.configure(resourceConfig, libraryOptions);
+const dataClient = generateClient<Schema>();
 
 export const handler = async (
     event: unknown,
@@ -401,12 +365,9 @@ export const handler = async (
 
         const fileName = key.split('/').at(-1) ?? key;
         const outKey = transcriptOutputKey(outputPrefix, recordingId);
-        const db = getDataClient();
 
-        if (db) {
-            await db.models.Recording.update({ id: recordingId, status: 'PROCESSING', errorMessage: null });
-            console.info('Recording marked as PROCESSING', { recordingId });
-        }
+        await dataClient.models.Recording.update({ id: recordingId, status: 'PROCESSING', errorMessage: null });
+        console.info('Recording marked as PROCESSING', { recordingId });
 
         let apiKey: string;
         try {
@@ -414,9 +375,7 @@ export const handler = async (
         } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
             console.error('OpenAI API key unavailable', { message });
-            if (db) {
-                await db.models.Recording.update({ id: recordingId, status: 'FAILED', errorMessage: message });
-            }
+            await dataClient.models.Recording.update({ id: recordingId, status: 'FAILED', errorMessage: message });
             results.push({ recordingId, sourceKey: key, error: message });
             continue;
         }
@@ -432,9 +391,7 @@ export const handler = async (
         } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
             console.error('Failed to read recording from S3', { key, message });
-            if (db) {
-                await db.models.Recording.update({ id: recordingId, status: 'FAILED', errorMessage: message });
-            }
+            await dataClient.models.Recording.update({ id: recordingId, status: 'FAILED', errorMessage: message });
             results.push({ recordingId, sourceKey: key, error: message });
             continue;
         }
@@ -459,9 +416,7 @@ export const handler = async (
                 message,
                 stack: err instanceof Error ? err.stack : undefined,
             });
-            if (db) {
-                await db.models.Recording.update({ id: recordingId, status: 'FAILED', errorMessage: message });
-            }
+            await dataClient.models.Recording.update({ id: recordingId, status: 'FAILED', errorMessage: message });
             results.push({ recordingId, sourceKey: key, error: message });
         }
     }
