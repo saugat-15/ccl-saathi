@@ -3,13 +3,10 @@ import { defineFunction } from '@aws-amplify/backend';
 /**
  * Lambda for the NAATI/CCL pipeline: OpenAI Whisper transcription → single JSON per recording in S3.
  */
-export const naatiProcessor = defineFunction({
-    name: 'naati-processor',
+export const testFunction = defineFunction({
+    name: 'testFunction',
     entry: './handler.ts',
-    timeoutSeconds: 300,
-    memoryMB: 512,
-    runtime: 20,
-    resourceGroupName: 'naatiProcessor',
+    resourceGroupName: 'testFunction',
     environment: {
         TRANSCRIBE_OUTPUT_PREFIX: 'naati-transcriptions/',
     },
