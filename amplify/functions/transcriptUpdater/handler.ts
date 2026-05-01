@@ -1,4 +1,3 @@
-import { getAmplifyDataClientConfig } from '@aws-amplify/backend/function/runtime';
 import { Amplify } from 'aws-amplify';
 import { generateClient } from 'aws-amplify/data';
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
@@ -118,22 +117,34 @@ function isS3UploadEvent(event: unknown): event is S3EventNotification {
     return Array.isArray(records);
 }
 
-const { resourceConfig, libraryOptions } = await getAmplifyDataClientConfig(
-    env as typeof env & { AMPLIFY_DATA_DEFAULT_NAME: string },
-);
-
-const intialiseDataClient = async () => {
-    try {
-        const { resourceConfig, libraryOptions } = await getAmplifyDataClientConfig(
-            env as typeof env & { AMPLIFY_DATA_DEFAULT_NAME: string },
-        );
-
-        Amplify.configure(resourceConfig, libraryOptions);
-        return generateClient<Schema>();
-    } catch (error) {
-        console.error('Failed to initialise data client', { error });
-        throw error;
-    }
+const intialiseDataClient = () => {
+    const typedEnv = env as typeof env & { AMPLIFY_DATA_DEFAULT_NAME: string };
+    Amplify.configure(
+        {
+            API: {
+                GraphQL: {
+                    endpoint: typedEnv.AMPLIFY_DATA_DEFAULT_NAME,
+                    region: process.env.AWS_REGION ?? 'ap-southeast-2',
+                    defaultAuthMode: 'iam',
+                },
+            },
+        },
+        {
+            Auth: {
+                credentialsProvider: {
+                    getCredentialsAndIdentityId: async () => ({
+                        credentials: {
+                            accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? '',
+                            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? '',
+                            sessionToken: process.env.AWS_SESSION_TOKEN,
+                        },
+                    }),
+                    clearCredentialsAndIdentityId: () => {},
+                },
+            },
+        },
+    );
+    return generateClient<Schema>();
 };
 
 async function readTranscriptPayload(
@@ -503,7 +514,7 @@ export const handler = async (event: unknown): Promise<{ statusCode: number; bod
     const handlerStartedAt = Date.now();
     let dataClient: ReturnType<typeof generateClient<Schema>>;
     try {
-        dataClient = await intialiseDataClient();
+        dataClient = intialiseDataClient();
     } catch (error) {
         console.error('Failed to initialise data client', { error });
         return {
