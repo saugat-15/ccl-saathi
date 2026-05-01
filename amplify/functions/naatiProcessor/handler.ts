@@ -7,6 +7,7 @@ import {
     GetSecretValueCommand,
     SecretsManagerClient,
 } from '@aws-sdk/client-secrets-manager';
+import { getAmplifyDataClientConfig } from '@aws-amplify/backend/function/runtime';
 import { Amplify } from 'aws-amplify';
 import { generateClient } from 'aws-amplify/data';
 import { env } from '$amplify/env/naati-processor.js';
@@ -292,34 +293,18 @@ type ProcessResult = {
     error?: string;
 };
 
-const intialiseDataClient = () => {
-    const typedEnv = env as typeof env & { AMPLIFY_DATA_DEFAULT_NAME: string };
-    Amplify.configure(
-        {
-            API: {
-                GraphQL: {
-                    endpoint: typedEnv.AMPLIFY_DATA_DEFAULT_NAME,
-                    region: process.env.AWS_REGION ?? 'ap-southeast-2',
-                    defaultAuthMode: 'iam',
-                },
-            },
-        },
-        {
-            Auth: {
-                credentialsProvider: {
-                    getCredentialsAndIdentityId: async () => ({
-                        credentials: {
-                            accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? '',
-                            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? '',
-                            sessionToken: process.env.AWS_SESSION_TOKEN,
-                        },
-                    }),
-                    clearCredentialsAndIdentityId: () => {},
-                },
-            },
-        },
-    );
-    return generateClient<Schema>();
+const intialiseDataClient = async () => {
+    try {
+        const { resourceConfig, libraryOptions } = await getAmplifyDataClientConfig(
+            env as typeof env & { AMPLIFY_DATA_DEFAULT_NAME: string },
+        );
+
+        Amplify.configure(resourceConfig, libraryOptions);
+        return generateClient<Schema>();
+    } catch (error) {
+        console.error('Failed to initialise data client', { error });
+        throw error;
+    }
 };
 
 const s3Client = new S3Client({});
@@ -330,7 +315,7 @@ export const handler = async (
 ): Promise<{ statusCode: number; body: string }> => {
     let dataClient: ReturnType<typeof generateClient<Schema>>;
     try {
-        dataClient = intialiseDataClient();
+        dataClient = await intialiseDataClient();
     } catch (error) {
         console.error('Failed to initialise data client', { error });
         return {
