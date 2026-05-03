@@ -7,23 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ChevronLeft, Loader2 } from "lucide-react";
 import type { Schema } from "@/amplify/data/resource";
+import ScoreReport, { type FeedbackDetails } from "@/app/components/attempt/ScoreReport";
 
 const client = generateClient<Schema>();
-
-type FeedbackDetails = {
-  overallScore: number | null;
-  accuracyScore: number | null;
-  completenessScore: number | null;
-  terminologyScore: number | null;
-  fluencyScore: number | null;
-  strengths: string[];
-  suggestions: string[];
-  missedTerms: string[];
-  criticalErrors: Array<{ segmentIndex?: number; type?: string; impact?: string }>;
-  gradedSegments: Array<{ segmentIndex?: number; segmentAccuracy?: number; comment?: string }>;
-  examReadinessLevel: string | null;
-  examReadinessReason: string | null;
-};
 
 function decodeDialogueId(encoded: string): string {
   return atob(decodeURIComponent(encoded));
@@ -114,7 +100,7 @@ export default function AttemptDetailPage({
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-5 py-8">
+      <div className="max-w-2xl mx-auto px-5 py-8">
         <Button
           variant="ghost"
           size="sm"
@@ -128,7 +114,9 @@ export default function AttemptDetailPage({
         </Button>
 
         <div className="mb-6">
-          <h1 className="font-serif text-2xl font-semibold text-foreground mt-1 mb-1">Detailed Feedback Report</h1>
+          <h1 className="font-serif text-2xl font-semibold text-foreground mt-1 mb-1">
+            Detailed Feedback Report
+          </h1>
           <p className="text-sm text-muted-foreground">Attempt ID: {recordingId}</p>
         </div>
         <Separator className="mb-6" />
@@ -147,79 +135,7 @@ export default function AttemptDetailPage({
             Feedback is not ready yet. Current status: {status ?? "Unknown"}.
           </p>
         ) : (
-          <div style={{ display: "grid", gap: 14 }}>
-            <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)", borderRadius: 12, padding: 14 }}>
-              <p style={{ margin: 0, fontWeight: 600, color: "var(--fg-strong)" }}>Overall Score</p>
-              <p style={{ margin: "6px 0 0", color: "var(--brand)", fontSize: 28, fontWeight: 700 }}>
-                {details.overallScore !== null ? Math.round(details.overallScore) : "--"}
-              </p>
-              <p style={{ margin: "8px 0 0", color: "var(--fg-muted)", fontSize: 12 }}>
-                Accuracy {details.accuracyScore ?? "--"} · Completeness {details.completenessScore ?? "--"} ·
-                Terminology {details.terminologyScore ?? "--"} · Fluency {details.fluencyScore ?? "--"}
-              </p>
-            </div>
-
-            <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)", borderRadius: 12, padding: 14 }}>
-              <p style={{ margin: "0 0 8px", fontWeight: 600, color: "var(--fg-strong)" }}>Strengths</p>
-              <p style={{ margin: 0, color: "var(--fg-muted)", fontSize: 13 }}>
-                {details.strengths.length > 0 ? details.strengths.join(" • ") : "—"}
-              </p>
-            </div>
-
-            <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)", borderRadius: 12, padding: 14 }}>
-              <p style={{ margin: "0 0 8px", fontWeight: 600, color: "var(--fg-strong)" }}>Priority Improvements</p>
-              <p style={{ margin: 0, color: "var(--fg-muted)", fontSize: 13 }}>
-                {details.suggestions.length > 0 ? details.suggestions.join(" • ") : "—"}
-              </p>
-            </div>
-
-            <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)", borderRadius: 12, padding: 14 }}>
-              <p style={{ margin: "0 0 8px", fontWeight: 600, color: "var(--fg-strong)" }}>Missed Terms</p>
-              <p style={{ margin: 0, color: "var(--fg-muted)", fontSize: 13 }}>
-                {details.missedTerms.length > 0 ? details.missedTerms.join(", ") : "None"}
-              </p>
-            </div>
-
-            <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)", borderRadius: 12, padding: 14 }}>
-              <p style={{ margin: "0 0 8px", fontWeight: 600, color: "var(--fg-strong)" }}>Critical Errors</p>
-              {details.criticalErrors.length === 0 ? (
-                <p style={{ margin: 0, color: "var(--fg-muted)", fontSize: 13 }}>None</p>
-              ) : (
-                <ul style={{ margin: 0, paddingLeft: 18, color: "var(--fg-muted)", fontSize: 13 }}>
-                  {details.criticalErrors.slice(0, 8).map((item, idx) => (
-                    <li key={`${item.segmentIndex ?? "s"}-${idx}`}>
-                      Segment {item.segmentIndex ?? "?"}: {item.type ?? "issue"} — {item.impact ?? ""}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)", borderRadius: 12, padding: 14 }}>
-              <p style={{ margin: "0 0 8px", fontWeight: 600, color: "var(--fg-strong)" }}>Exam Readiness</p>
-              <p style={{ margin: "0 0 6px", color: "var(--fg-default)", fontSize: 13 }}>
-                {details.examReadinessLevel ?? "—"}
-              </p>
-              <p style={{ margin: 0, color: "var(--fg-muted)", fontSize: 13 }}>
-                {details.examReadinessReason ?? "—"}
-              </p>
-            </div>
-
-            <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)", borderRadius: 12, padding: 14 }}>
-              <p style={{ margin: "0 0 8px", fontWeight: 600, color: "var(--fg-strong)" }}>Segment Feedback</p>
-              {details.gradedSegments.length === 0 ? (
-                <p style={{ margin: 0, color: "var(--fg-muted)", fontSize: 13 }}>No segment details available.</p>
-              ) : (
-                <ul style={{ margin: 0, paddingLeft: 18, color: "var(--fg-muted)", fontSize: 13 }}>
-                  {details.gradedSegments.slice(0, 12).map((seg, idx) => (
-                    <li key={`${seg.segmentIndex ?? "g"}-${idx}`}>
-                      Segment {seg.segmentIndex ?? "?"}: {seg.segmentAccuracy ?? "--"} — {seg.comment ?? ""}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
+          <ScoreReport details={details} />
         )}
       </div>
     </div>
