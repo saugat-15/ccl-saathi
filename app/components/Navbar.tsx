@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
-import { BookOpen, History, HelpCircle, LogOut, Moon, Settings, Sun, Zap } from "lucide-react";
+import { BookOpen, CircleDollarSign, History, HelpCircle, LogOut, Moon, Settings, Sun, Zap } from "lucide-react";
 import { useTheme } from "next-themes";
 import Logo from "./Logo";
 
@@ -37,10 +37,6 @@ const GUEST_NAV = [
   { href: "/#resources",   label: "Resources" },
 ] as const;
 
-const AUTH_NAV = [
-  { href: "/",        label: "Practice" },
-  { href: "/pricing", label: "Pricing" },
-] as const;
 
 function ThemeToggleButton() {
   const { resolvedTheme, setTheme } = useTheme();
@@ -93,7 +89,7 @@ export default function Navbar() {
   const initials    = getInitials(givenName, familyName, email);
   const displayName = givenName && familyName ? `${givenName} ${familyName}` : givenName || email;
   const isLoginRoute = pathname === "/login";
-  const navLinks     = authenticated ? AUTH_NAV : GUEST_NAV;
+  const navLinks     = authenticated ? [] : GUEST_NAV;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -197,6 +193,10 @@ export default function Navbar() {
                   <DropdownMenuItem onClick={() => router.push("/")}>
                     <BookOpen className="h-4 w-4" />
                     Practice
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push("/pricing")}>
+                    <CircleDollarSign className="h-4 w-4" />
+                    Pricing
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => router.push("/history")} disabled>
                     <History className="h-4 w-4" />
