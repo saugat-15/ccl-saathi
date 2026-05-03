@@ -221,7 +221,7 @@ export default function PricingPage() {
                 </button>
               ) : authenticated ? (
                 <button
-                  onClick={() => {/* billing flow goes here */}}
+                  onClick={() => {/* billing flow goes here */ }}
                   style={{
                     width: "100%", padding: "11px 20px", borderRadius: 10,
                     background: "var(--brand)", border: "none",
@@ -283,16 +283,22 @@ export default function PricingPage() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                <th style={{ padding: "12px 24px", textAlign: "left", fontSize: 13,
-                  fontWeight: 600, color: "var(--fg-muted)", width: "55%" }}>
+                <th style={{
+                  padding: "12px 24px", textAlign: "left", fontSize: 13,
+                  fontWeight: 600, color: "var(--fg-muted)", width: "55%"
+                }}>
                   Feature
                 </th>
-                <th style={{ padding: "12px 16px", textAlign: "center", fontSize: 13,
-                  fontWeight: 600, color: "var(--fg-muted)" }}>
+                <th style={{
+                  padding: "12px 16px", textAlign: "center", fontSize: 13,
+                  fontWeight: 600, color: "var(--fg-muted)"
+                }}>
                   Free
                 </th>
-                <th style={{ padding: "12px 16px", textAlign: "center", fontSize: 13,
-                  fontWeight: 600, color: "var(--brand)" }}>
+                <th style={{
+                  padding: "12px 16px", textAlign: "center", fontSize: 13,
+                  fontWeight: 600, color: "var(--brand)"
+                }}>
                   Pro
                 </th>
               </tr>
@@ -383,7 +389,6 @@ export default function PricingPage() {
 
         {/* Waitlist CTA */}
         <div style={{
-          background: "var(--forest-50)", border: "1px solid var(--forest-200)",
           borderRadius: 16, padding: "28px 28px",
           textAlign: "center",
         }}>
