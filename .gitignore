@@ -4,6 +4,7 @@
 # Amplify Hosting uses npm (amplify.yml); a second lockfile breaks CDK Node bundling.
 pnpm-lock.yaml
 /node_modules
+.idea/
 /.pnp
 .pnp.js
 .yarn/install-state.gz

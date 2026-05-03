@@ -215,7 +215,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      // if (!allRecorded) throw new Error("Please record all segments before submitting.");
+      if (!allRecorded) throw new Error("Please record all segments before submitting.");
       const { userId } = await getCurrentUser();
       const { identityId } = await fetchAuthSession();
       if (!identityId) throw new Error("Could not determine identity. Please sign out and sign in again.");
@@ -520,7 +520,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <button
             onClick={() => handleSubmit(segmentStates)}
-            disabled={isSubmitting}
+            disabled={!allRecorded || isSubmitting}
             style={{
               padding: "11px 28px", borderRadius: 10,
               background: allRecorded && !isSubmitting ? "var(--brand)" : "var(--bg-sunken)",
