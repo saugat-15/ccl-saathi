@@ -10,10 +10,11 @@ import { Check, ChevronLeft, Zap } from "lucide-react";
 const IS_PRO = false;
 
 const FREE_FEATURES = [
-  "One practice dialogue per topic",
+  "2 free practice dialogues",
   "Full audio playback & replay",
   "Segment-by-segment practice mode",
   "In-browser recording",
+  "AI scoring & limited feedback",
   "Progress tracked on this device",
 ];
 
@@ -21,7 +22,8 @@ const PRO_FEATURES = [
   "Everything in Free",
   "All dialogues in every category",
   "Unlimited recordings & submissions",
-  "AI scoring & feedback (coming soon)",
+  "AI scoring & full detailed feedback",
+  "Full dialogue practice mode (coming soon)",
   "Priority access to new dialogues",
   "Progress synced across devices",
 ];
@@ -63,7 +65,7 @@ export default function PricingPage() {
             Simple, honest pricing
           </h1>
           <p style={{ fontSize: 15, color: "var(--fg-muted)", margin: "0 auto", maxWidth: 460 }}>
-            Start free and practise at your own pace. Upgrade when you want full library access and AI scoring.
+            Start free with AI-scored feedback. Upgrade for full library access, detailed reports, and full dialogue practice.
           </p>
         </div>
 
@@ -305,12 +307,12 @@ export default function PricingPage() {
             </thead>
             <tbody>
               {[
-                { label: "Practice dialogues", free: "1 per category", pro: "All dialogues" },
+                { label: "Practice dialogues", free: "2 total", pro: "All dialogues" },
                 { label: "Segment-by-segment mode", free: true, pro: true },
-                { label: "Full dialogue mode", free: true, pro: true },
+                { label: "Full dialogue practice mode", free: false, pro: "Coming soon" },
                 { label: "In-browser recording", free: true, pro: true },
                 { label: "Unlimited recordings", free: false, pro: true },
-                { label: "AI scoring & feedback", free: false, pro: "Coming soon" },
+                { label: "AI scoring & feedback", free: "Limited", pro: true },
                 { label: "Progress sync across devices", free: false, pro: true },
                 { label: "Priority new dialogue access", free: false, pro: true },
               ].map((row, i) => (

@@ -7,6 +7,7 @@ import AuthPage from "./AuthPage";
 const PUBLIC_PREFIXES = [
   "/",
   "/login",
+  "/pricing",
   "/privacy",
   "/terms",
   "/contact",
