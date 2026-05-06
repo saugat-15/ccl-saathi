@@ -1,6 +1,7 @@
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 import { naatiProcessor } from '../functions/naatiProcessor/resource.js';
 import { transcriptUpdater } from '../functions/transcriptUpdater/resource.js';
+import { postConfirmation } from '../functions/postConfirmation/resource.js';
 
 const schema = a.schema({
 
@@ -9,11 +10,12 @@ const schema = a.schema({
     hasSubscription: a.boolean().default(false),
     subscriptionExpiresAt: a.datetime(),
     stripeCustomerId: a.string(),
+    freeAttempts: a.integer().default(0),
     stripeSubscriptionId: a.string(),
     recordings: a.hasMany('Recording', 'userId'),
   })
     .authorization(allow => [
-      allow.owner(),
+      allow.ownerDefinedIn('id'),
       allow.group('admin'),
     ]),
 
@@ -64,7 +66,7 @@ const schema = a.schema({
     feedback: a.hasOne('Feedback', 'recordingId'),
   })
     .authorization(allow => [
-      allow.owner(),
+      allow.ownerDefinedIn('userId'),
       allow.group('admin'),
     ]),
 
@@ -113,6 +115,7 @@ const schema = a.schema({
 }).authorization((allow) => [
   allow.resource(naatiProcessor),
   allow.resource(transcriptUpdater),
+  allow.resource(postConfirmation),
 ]);
 
 export type Schema = ClientSchema<typeof schema>;

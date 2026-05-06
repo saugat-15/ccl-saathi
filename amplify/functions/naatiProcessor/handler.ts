@@ -201,7 +201,7 @@ async function transcribeWithWhisper(
     form.append('file', new Blob([new Uint8Array(audio)], { type: mime }), fileName);
     form.append('model', 'whisper-1');
     form.append('response_format', 'verbose_json');
-    form.append('prompt', 'prompt: `This is a bilingual NAATI CCL dialogue alternating between English and Nepali. Transcribe each speaker in their original language. Do not translate. When the speaker speaks Nepali, transcribe in Nepali Devanagari script. When the speaker speaks English, transcribe in English.`,');
+    form.append('prompt', 'This is a bilingual NAATI CCL interpretation recording. The speaker is interpreting between English and Nepali. Transcribe accurately in the language being spoken. For Nepali speech, use Devanagari script. For English speech, use English. Do not translate.');
 
     const res = await fetch(OPENAI_TRANSCRIPTIONS_URL, {
         method: 'POST',

@@ -1,6 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { Amplify } from "aws-amplify";
+import outputs from "@/amplify_outputs.json";
+Amplify.configure(outputs, { ssr: true });
+
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { generateClient } from "aws-amplify/data";
 import { Button } from "@/components/ui/button";
@@ -12,11 +16,26 @@ import ScoreReport, { type FeedbackDetails } from "@/app/components/attempt/Scor
 
 const client = generateClient<Schema>();
 
-type AttemptRow = {
+type RecordingItem = {
   id: string;
-  createdAt: string | null;
-  status: string | null;
-  overallScore: number | null;
+  createdAt: string | null | undefined;
+  status: string | null | undefined;
+};
+
+type FeedbackItem = {
+  recordingId: string;
+  overallScore: number | null | undefined;
+  accuracyScore: number | null | undefined;
+  completenessScore: number | null | undefined;
+  terminologyScore: number | null | undefined;
+  fluencyScore: number | null | undefined;
+  strengths: (string | null)[] | null | undefined;
+  suggestions: (string | null)[] | null | undefined;
+  missedTerms: (string | null)[] | null | undefined;
+  criticalErrors: unknown;
+  gradedSegments: unknown;
+  examReadinessLevel: string | null | undefined;
+  examReadinessReason: string | null | undefined;
 };
 
 function toLabel(s: string) {
@@ -27,7 +46,7 @@ function decodeDialogueId(encoded: string): string {
   return atob(decodeURIComponent(encoded));
 }
 
-function fmtDate(value: string | null): string {
+function fmtDate(value: string | null | undefined): string {
   if (!value) return "Unknown time";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
@@ -53,6 +72,27 @@ function getScoreColor(score: number): string {
   return "var(--danger)";
 }
 
+function feedbackToDetails(fb: FeedbackItem): FeedbackDetails {
+  return {
+    overallScore: fb.overallScore ?? null,
+    accuracyScore: fb.accuracyScore ?? null,
+    completenessScore: fb.completenessScore ?? null,
+    terminologyScore: fb.terminologyScore ?? null,
+    fluencyScore: fb.fluencyScore ?? null,
+    strengths: (fb.strengths ?? []).filter((s): s is string => typeof s === "string"),
+    suggestions: (fb.suggestions ?? []).filter((s): s is string => typeof s === "string"),
+    missedTerms: (fb.missedTerms ?? []).filter((s): s is string => typeof s === "string"),
+    criticalErrors: parseJsonArray<{ segmentIndex?: number; type?: string; impact?: string }>(
+      fb.criticalErrors,
+    ),
+    gradedSegments: parseJsonArray<{ segmentIndex?: number; segmentAccuracy?: number; comment?: string }>(
+      fb.gradedSegments,
+    ),
+    examReadinessLevel: fb.examReadinessLevel ?? null,
+    examReadinessReason: fb.examReadinessReason ?? null,
+  };
+}
+
 export default function DialogueAttemptsPage({
   params,
 }: {
@@ -62,110 +102,101 @@ export default function DialogueAttemptsPage({
   const category = params.category;
   const dialogueBasePath = useMemo(() => decodeDialogueId(params.dialogueId), [params.dialogueId]);
 
-  const [attempts, setAttempts] = useState<AttemptRow[]>([]);
+  const [recordings, setRecordings] = useState<RecordingItem[]>([]);
+  const [feedbacks, setFeedbacks] = useState<FeedbackItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [selectedDetails, setSelectedDetails] = useState<FeedbackDetails | null>(null);
-  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
-  const [detailsError, setDetailsError] = useState<string | null>(null);
-  const [detailsStatus, setDetailsStatus] = useState<string | null>(null);
 
+  // Subscribe to recordings for this dialogue
   useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      setIsLoading(true);
-      setLoadError(null);
-      try {
-        const recordingsResult = await client.models.Recording.list({
-          filter: { dialogueId: { eq: dialogueBasePath } },
-          limit: 100,
-        });
-        if (recordingsResult.errors) throw new Error("Failed to load attempts.");
-
-        const feedbackResult = await client.models.Feedback.list({
-          filter: { dialogueId: { eq: dialogueBasePath } },
-          limit: 100,
-        });
-        if (feedbackResult.errors) throw new Error("Failed to load feedback.");
-
-        const feedbackByRecording = new Map<string, number>();
-        for (const fb of feedbackResult.data) {
-          if (typeof fb.recordingId !== "string") continue;
-          if (typeof fb.overallScore === "number") {
-            feedbackByRecording.set(fb.recordingId, fb.overallScore);
-          }
-        }
-
-        const next: AttemptRow[] = recordingsResult.data
-          .map((recording) => ({
-            id: recording.id,
-            createdAt: recording.createdAt ?? null,
-            status: recording.status ?? null,
-            overallScore: feedbackByRecording.get(recording.id) ?? null,
-          }))
-          .sort((a, b) => {
+    const sub = client.models.Recording.observeQuery({
+      filter: { dialogueId: { eq: dialogueBasePath } },
+    }).subscribe({
+      next: ({ items, isSynced }) => {
+        setRecordings(
+          [...items].sort((a, b) => {
             const at = a.createdAt ? new Date(a.createdAt).getTime() : 0;
             const bt = b.createdAt ? new Date(b.createdAt).getTime() : 0;
             return bt - at;
-          });
-
-        if (!cancelled) setAttempts(next);
-      } catch (err) {
-        if (!cancelled) setLoadError(err instanceof Error ? err.message : "Failed to load attempts.");
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
-    }
-    void load();
-    return () => { cancelled = true; };
+          }),
+        );
+        if (isSynced) setIsLoading(false);
+      },
+      error: () => {
+        setLoadError("Failed to load attempts.");
+        setIsLoading(false);
+      },
+    });
+    return () => sub.unsubscribe();
   }, [dialogueBasePath]);
 
-  const selectAttempt = useCallback(async (id: string) => {
-    if (id === selectedId) return;
-    setSelectedId(id);
-    setSelectedDetails(null);
-    setDetailsError(null);
-    setDetailsStatus(null);
-    setIsLoadingDetails(true);
-    try {
-      const recordingResult = await client.models.Recording.get({ id });
-      if (!recordingResult.errors && recordingResult.data) {
-        setDetailsStatus(recordingResult.data.status ?? null);
-      }
+  // Subscribe to feedback for this dialogue
+  useEffect(() => {
+    const sub = client.models.Feedback.observeQuery({
+      filter: { dialogueId: { eq: dialogueBasePath } },
+    }).subscribe({
+      next: ({ items }) => {
+        setFeedbacks(
+          items
+            .filter((fb): fb is typeof fb & { recordingId: string } =>
+              typeof fb.recordingId === "string",
+            )
+            .map((fb) => ({
+              recordingId: fb.recordingId,
+              overallScore: fb.overallScore,
+              accuracyScore: fb.accuracyScore,
+              completenessScore: fb.completenessScore,
+              terminologyScore: fb.terminologyScore,
+              fluencyScore: fb.fluencyScore,
+              strengths: fb.strengths,
+              suggestions: fb.suggestions,
+              missedTerms: fb.missedTerms,
+              criticalErrors: fb.criticalErrors,
+              gradedSegments: fb.gradedSegments,
+              examReadinessLevel: fb.examReadinessLevel,
+              examReadinessReason: fb.examReadinessReason,
+            })),
+        );
+      },
+    });
+    return () => sub.unsubscribe();
+  }, [dialogueBasePath]);
 
-      const feedbackResult = await client.models.Feedback.list({
-        filter: { recordingId: { eq: id } },
-      });
-      if (feedbackResult.errors) throw new Error("Could not load feedback.");
-      const feedback = feedbackResult.data[0];
-      if (!feedback) return;
+  // Derive attempt rows from live recordings + feedbacks
+  const attempts = useMemo(() => {
+    const scoreByRecording = new Map(
+      feedbacks
+        .filter((fb): fb is FeedbackItem & { overallScore: number } =>
+          typeof fb.overallScore === "number",
+        )
+        .map((fb) => [fb.recordingId, fb.overallScore]),
+    );
+    return recordings.map((r) => ({
+      id: r.id,
+      createdAt: r.createdAt ?? null,
+      status: r.status ?? null,
+      overallScore: scoreByRecording.get(r.id) ?? null,
+    }));
+  }, [recordings, feedbacks]);
 
-      setSelectedDetails({
-        overallScore: feedback.overallScore ?? null,
-        accuracyScore: feedback.accuracyScore ?? null,
-        completenessScore: feedback.completenessScore ?? null,
-        terminologyScore: feedback.terminologyScore ?? null,
-        fluencyScore: feedback.fluencyScore ?? null,
-        strengths: (feedback.strengths ?? []).filter((s): s is string => typeof s === "string"),
-        suggestions: (feedback.suggestions ?? []).filter((s): s is string => typeof s === "string"),
-        missedTerms: (feedback.missedTerms ?? []).filter((s): s is string => typeof s === "string"),
-        criticalErrors: parseJsonArray<{ segmentIndex?: number; type?: string; impact?: string }>(
-          feedback.criticalErrors,
-        ),
-        gradedSegments: parseJsonArray<{ segmentIndex?: number; segmentAccuracy?: number; comment?: string }>(
-          feedback.gradedSegments,
-        ),
-        examReadinessLevel: feedback.examReadinessLevel ?? null,
-        examReadinessReason: feedback.examReadinessReason ?? null,
-      });
-    } catch (err) {
-      setDetailsError(err instanceof Error ? err.message : "Failed to load feedback.");
-    } finally {
-      setIsLoadingDetails(false);
-    }
-  }, [selectedId]);
+  // Derive selected attempt's status and details from live data
+  const selectedRecording = useMemo(
+    () => recordings.find((r) => r.id === selectedId) ?? null,
+    [recordings, selectedId],
+  );
+  const selectedFeedback = useMemo(
+    () => feedbacks.find((fb) => fb.recordingId === selectedId) ?? null,
+    [feedbacks, selectedId],
+  );
+  const selectedDetails = useMemo(
+    () => (selectedFeedback ? feedbackToDetails(selectedFeedback) : null),
+    [selectedFeedback],
+  );
+
+  const processingStatuses = new Set(["UPLOADED", "PROCESSING", "SCORING"]);
+  const selectedStatus = selectedRecording?.status ?? null;
+  const isProcessing = selectedStatus !== null && processingStatuses.has(selectedStatus);
 
   return (
     <div className="min-h-screen bg-background">
@@ -225,12 +256,15 @@ export default function DialogueAttemptsPage({
                 const scoreColor = typeof attempt.overallScore === "number"
                   ? getScoreColor(attempt.overallScore)
                   : "var(--fg-muted)";
+                const isPending = attempt.overallScore === null &&
+                  attempt.status !== null &&
+                  processingStatuses.has(attempt.status);
 
                 return (
                   <li key={attempt.id}>
                     <button
                       type="button"
-                      onClick={() => void selectAttempt(attempt.id)}
+                      onClick={() => setSelectedId(attempt.id)}
                       className={cn(
                         "w-full text-left rounded-xl px-4 py-3 border transition-all",
                         isSelected
@@ -264,6 +298,11 @@ export default function DialogueAttemptsPage({
                             >
                               {Math.round(attempt.overallScore)}
                             </span>
+                          ) : isPending ? (
+                            <Loader2
+                              className="h-3.5 w-3.5 animate-spin"
+                              style={{ color: "var(--fg-subtle)" }}
+                            />
                           ) : (
                             <span className="text-xs" style={{ color: "var(--fg-subtle)" }}>
                               {attempt.status ?? "—"}
@@ -296,30 +335,32 @@ export default function DialogueAttemptsPage({
                     Select an attempt to view its report
                   </p>
                 </div>
-              ) : isLoadingDetails ? (
+              ) : selectedDetails !== null ? (
+                <ScoreReport details={selectedDetails} />
+              ) : isProcessing ? (
                 <div
-                  className="rounded-xl border px-6 py-10 flex items-center justify-center gap-2"
+                  className="rounded-xl border px-6 py-10 flex flex-col items-center justify-center gap-3 text-center"
                   style={{ borderColor: "var(--border-subtle)", background: "var(--bg-surface)" }}
                 >
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Loading report…</span>
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  <p className="text-sm" style={{ color: "var(--fg-muted)" }}>
+                    {selectedStatus === "SCORING" ? "Scoring your interpretation…" : "Processing your recording…"}
+                  </p>
+                  <p className="text-xs" style={{ color: "var(--fg-subtle)" }}>
+                    This page will update automatically.
+                  </p>
                 </div>
-              ) : detailsError ? (
-                <p className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-4 py-3">
-                  {detailsError}
-                </p>
-              ) : selectedDetails === null ? (
+              ) : (
                 <div
                   className="rounded-xl border px-6 py-10 text-center"
                   style={{ borderColor: "var(--border-subtle)", background: "var(--bg-surface)" }}
                 >
                   <p className="text-sm" style={{ color: "var(--fg-muted)" }}>
-                    Feedback not ready yet.
-                    {detailsStatus ? ` Status: ${detailsStatus}.` : ""}
+                    {selectedStatus === "FAILED"
+                      ? "Processing failed. Please try a new attempt."
+                      : "Feedback not ready yet."}
                   </p>
                 </div>
-              ) : (
-                <ScoreReport details={selectedDetails} />
               )}
             </div>
           </div>

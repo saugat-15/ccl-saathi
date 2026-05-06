@@ -1,5 +1,9 @@
 "use client";
 
+import { Amplify } from "aws-amplify";
+import outputs from "@/amplify_outputs.json";
+Amplify.configure(outputs, { ssr: true });
+
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { generateClient } from "aws-amplify/data";
@@ -9,10 +13,29 @@ import type { Schema } from "@/amplify/data/resource";
 import AudioRecorder from "@/app/components/AudioRecorder";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { markDialogueCompleted, notifyProgressUpdated } from "@/lib/progress";
-import { ChevronLeft, Play, Pause, Loader2, CheckCircle2, Lock } from "lucide-react";
+import { ChevronLeft, Play, Pause, Loader2, CheckCircle2, Lock, Zap, X } from "lucide-react";
 
 const client = generateClient<Schema>();
+
+async function resolveUserRecord(userId: string) {
+  // Use list instead of get: with allow.owner(), get returns Unauthorized when
+  // the record doesn't exist (AppSync can't verify ownership on a null item).
+  // list returns an empty array instead, which we can handle cleanly.
+  const { data, errors } = await client.models.User.list({
+    filter: { id: { eq: userId } },
+  });
+
+  if (errors?.length) {
+    throw new Error(errors[0].message ?? "Failed to load your account. Please try again.");
+  }
+
+  const record = data?.[0];
+  if (!record) {
+    throw new Error("Account not found. Please sign out and sign in again.");
+  }
+
+  return record;
+}
 
 type TranscriptSegment = {
   segmentIndex: number;
@@ -31,6 +54,72 @@ type SegmentState = {
   recordedUrl: string | null;
   recorded: boolean;
 };
+
+async function combineSegmentsToWav(blobs: Blob[]): Promise<Blob> {
+  const audioCtx = new AudioContext();
+  try {
+    const buffers = await Promise.all(
+      blobs.map(async (blob) => {
+        const arrayBuffer = await blob.arrayBuffer();
+        return audioCtx.decodeAudioData(arrayBuffer);
+      }),
+    );
+    const sampleRate = buffers[0].sampleRate;
+    const totalFrames = buffers.reduce((sum, buf) => sum + buf.length, 0);
+    const combined = audioCtx.createBuffer(1, totalFrames, sampleRate);
+    let offset = 0;
+    for (const buf of buffers) {
+      const srcData =
+        buf.numberOfChannels > 1 ? downmixToMono(buf) : buf.getChannelData(0);
+      combined.copyToChannel(srcData as Float32Array<ArrayBuffer>, 0, offset);
+      offset += buf.length;
+    }
+    return encodeWav(combined);
+  } finally {
+    await audioCtx.close();
+  }
+}
+
+function downmixToMono(buf: AudioBuffer): Float32Array {
+  const mono = new Float32Array(buf.length);
+  for (let c = 0; c < buf.numberOfChannels; c++) {
+    const ch = buf.getChannelData(c);
+    for (let i = 0; i < ch.length; i++) mono[i] += ch[i];
+  }
+  for (let i = 0; i < mono.length; i++) mono[i] /= buf.numberOfChannels;
+  return mono;
+}
+
+function encodeWav(buffer: AudioBuffer): Blob {
+  const sampleRate = buffer.sampleRate;
+  const samples = buffer.getChannelData(0);
+  const dataLength = samples.length * 2;
+  const ab = new ArrayBuffer(44 + dataLength);
+  const view = new DataView(ab);
+  const writeStr = (off: number, s: string) => {
+    for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i));
+  };
+  writeStr(0, "RIFF");
+  view.setUint32(4, 36 + dataLength, true);
+  writeStr(8, "WAVE");
+  writeStr(12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);  // PCM
+  view.setUint16(22, 1, true);  // mono
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeStr(36, "data");
+  view.setUint32(40, dataLength, true);
+  let off = 44;
+  for (let i = 0; i < samples.length; i++) {
+    const clamped = Math.max(-1, Math.min(1, samples[i]));
+    view.setInt16(off, clamped < 0 ? clamped * 0x8000 : clamped * 0x7fff, true);
+    off += 2;
+  }
+  return new Blob([ab], { type: "audio/wav" });
+}
 
 function fmt(secs: number) {
   const m = Math.floor(secs / 60);
@@ -150,12 +239,28 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitDone, setSubmitDone] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
     async function load() {
       setIsLoading(true);
       setLoadError(null);
       try {
+        const { userId } = await getCurrentUser();
+
+        // ── Subscription / free-attempt gate ────────────────────────────────
+        const userRecord = await resolveUserRecord(userId);
+        const hasValidSubscription =
+          userRecord.hasSubscription === true &&
+          (userRecord.subscriptionExpiresAt == null ||
+            new Date(userRecord.subscriptionExpiresAt) > new Date());
+
+        if (!hasValidSubscription && (userRecord.freeAttempts ?? 0) >= 2) {
+          setShowUpgradeModal(true);
+          return;
+        }
+        // ────────────────────────────────────────────────────────────────────
+
         const folder = basePath.split("/").slice(0, -1).join("/") + "/";
         const { items } = await list({ path: folder });
         const jsonItem = items.find((item) => item.path.endsWith(".json"));
@@ -215,27 +320,55 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      if (!allRecorded) throw new Error("Please record all segments before submitting.");
+      // if (!allRecorded) throw new Error("Please record all segments before submitting.");
       const { userId } = await getCurrentUser();
+
+      // ── Subscription / free-attempt gate ────────────────────────────────
+      const userRecord = await resolveUserRecord(userId);
+      const hasValidSubscription =
+        userRecord.hasSubscription === true &&
+        (userRecord.subscriptionExpiresAt == null ||
+          new Date(userRecord.subscriptionExpiresAt) > new Date());
+
+      if (!hasValidSubscription) {
+        if ((userRecord.freeAttempts ?? 0) >= 2) {
+          setShowUpgradeModal(true);
+          return;
+        }
+      }
+      // ────────────────────────────────────────────────────────────────────
+
       const { identityId } = await fetchAuthSession();
       if (!identityId) throw new Error("Could not determine identity. Please sign out and sign in again.");
 
-      for (let i = 0; i < recordings.length; i++) {
-        const seg = recordings[i];
-        if (!seg.blob || !seg.mimeType) continue;
+      const recordedBlobs = recordings
+        .filter((s): s is SegmentState & { blob: Blob; mimeType: string } =>
+          s.blob !== null && s.mimeType !== null,
+        )
+        .map((s) => s.blob);
 
-        const { data: recording, errors } = await client.models.Recording.create({
-          userId, dialogueId: basePath, s3Key: "pending", status: "UPLOADED", attemptNumber: 1,
+      if (recordedBlobs.length === 0) throw new Error("No recordings to submit.");
+
+      // Combine all segment audio into a single WAV file (1 attempt = 1 recording)
+      const combinedWav = await combineSegmentsToWav(recordedBlobs);
+
+      const { data: recording, errors } = await client.models.Recording.create({
+        userId, dialogueId: basePath, s3Key: "pending", status: "UPLOADED", attemptNumber: 1,
+      });
+      if (errors || !recording) throw new Error("Failed to create attempt record.");
+
+      const s3Key = `protected/${identityId}/recordings/${recording.id}.wav`;
+      await uploadData({ path: s3Key, data: combinedWav, options: { contentType: "audio/wav" } }).result;
+      await client.models.Recording.update({ id: recording.id, s3Key });
+
+      // Increment free attempt count if not subscribed
+      if (!hasValidSubscription && userRecord) {
+        await client.models.User.update({
+          id: userId,
+          freeAttempts: (userRecord.freeAttempts ?? 0) + 1,
         });
-        if (errors || !recording) throw new Error(`Failed to create record for segment ${i + 1}.`);
-
-        const ext = seg.mimeType.includes("webm") ? "webm" : "mp4";
-        const s3Key = `protected/${identityId}/recordings/${recording.id}.${ext}`;
-        await uploadData({ path: s3Key, data: seg.blob, options: { contentType: seg.mimeType } }).result;
-        await client.models.Recording.update({ id: recording.id, s3Key });
       }
-      markDialogueCompleted(basePath);
-      notifyProgressUpdated();
+
       setSubmitDone(true);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "An unexpected error occurred.");
@@ -520,7 +653,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <button
             onClick={() => handleSubmit(segmentStates)}
-            disabled={!allRecorded || isSubmitting}
+            disabled={isSubmitting}
             style={{
               padding: "11px 28px", borderRadius: 10,
               background: allRecorded && !isSubmitting ? "var(--brand)" : "var(--bg-sunken)",
@@ -542,6 +675,84 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
           )}
         </div>
       </div>
+
+      {/* ── Upgrade modal ───────────────────────────────────────────────── */}
+      {showUpgradeModal && (
+        <div
+          style={{
+            position: "fixed", inset: 0, zIndex: 50,
+            background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)",
+            display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
+          }}
+          onClick={() => setShowUpgradeModal(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "var(--bg-surface)", borderRadius: 20,
+              padding: "36px 32px", width: "100%", maxWidth: 400,
+              boxShadow: "var(--shadow-md)", position: "relative",
+              border: "1px solid var(--border-subtle)",
+            }}
+          >
+            <button
+              onClick={() => setShowUpgradeModal(false)}
+              style={{
+                position: "absolute", top: 16, right: 16,
+                background: "none", border: "none", cursor: "pointer",
+                color: "var(--fg-muted)", padding: 4, borderRadius: 6,
+              }}
+            >
+              <X style={{ width: 18, height: 18 }} />
+            </button>
+
+            <div style={{
+              width: 52, height: 52, borderRadius: 14,
+              background: "var(--amber-50)", border: "1.5px solid var(--amber-200)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              marginBottom: 20,
+            }}>
+              <Zap style={{ width: 24, height: 24, color: "var(--amber-500)" }} />
+            </div>
+
+            <h2 style={{
+              fontFamily: "var(--font-serif)", fontSize: 20, fontWeight: 600,
+              color: "var(--fg-strong)", margin: "0 0 10px",
+            }}>
+              Free attempt limit reached
+            </h2>
+            <p style={{ fontSize: 14, color: "var(--fg-muted)", margin: "0 0 24px", lineHeight: 1.6 }}>
+              You&apos;ve used your 2 free practice attempts. Upgrade to Pro to keep practising with unlimited submissions.
+            </p>
+
+            <button
+              onClick={() => router.push("/pricing")}
+              style={{
+                width: "100%", padding: "12px 20px", borderRadius: 10,
+                background: "var(--brand)", border: "none", color: "#fff",
+                fontFamily: "var(--font-sans)", fontSize: 14, fontWeight: 600,
+                cursor: "pointer", boxShadow: "var(--shadow-brand)",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                marginBottom: 10,
+              }}
+            >
+              <Zap style={{ width: 15, height: 15 }} />
+              Upgrade to Pro
+            </button>
+            <button
+              onClick={() => setShowUpgradeModal(false)}
+              style={{
+                width: "100%", padding: "11px 20px", borderRadius: 10,
+                background: "none", border: "1px solid var(--border-subtle)", color: "var(--fg-muted)",
+                fontFamily: "var(--font-sans)", fontSize: 14, fontWeight: 500,
+                cursor: "pointer",
+              }}
+            >
+              Maybe later
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

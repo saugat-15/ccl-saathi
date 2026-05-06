@@ -2,22 +2,30 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
+
+const SCRIPT_URL = process.env.NEXT_PUBLIC_WAITLIST_SCRIPT_URL ?? "";
 
 export default function WaitlistForm() {
   const [email, setEmail] = useState("");
   const [done, setDone] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = email.trim();
-    if (!trimmed) return;
+    if (!trimmed || isSubmitting) return;
+    setIsSubmitting(true);
     try {
-      window.localStorage.setItem(
-        "ccl-saathi-waitlist-email",
-        JSON.stringify({ email: trimmed, at: Date.now() })
-      );
+      if (SCRIPT_URL) {
+        const body = new URLSearchParams({ email: trimmed });
+        // no-cors: Google Apps Script doesn't set CORS headers; response is opaque but request goes through
+        await fetch(SCRIPT_URL, { method: "POST", body, mode: "no-cors" });
+      }
     } catch {
-      /* ignore */
+      // fire-and-forget — don't block the user on network errors
+    } finally {
+      setIsSubmitting(false);
     }
     setDone(true);
   }
@@ -49,7 +57,8 @@ export default function WaitlistForm() {
         onChange={(e) => setEmail(e.target.value)}
         className="flex-1 h-10 rounded-md border border-input bg-background p-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       />
-      <Button type="submit" size="lg" className="shrink-0">
+      <Button type="submit" size="lg" className="shrink-0 gap-2" disabled={isSubmitting}>
+        {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
         Join the waitlist
       </Button>
     </form>

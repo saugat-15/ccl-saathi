@@ -1,14 +1,21 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Amplify } from "aws-amplify";
+import outputs from "@/amplify_outputs.json";
+Amplify.configure(outputs, { ssr: true });
+
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { list } from "aws-amplify/storage";
 import { useAuthenticator } from "@aws-amplify/ui-react";
-import { fetchUserAttributes } from "aws-amplify/auth";
+import { fetchUserAttributes, getCurrentUser } from "aws-amplify/auth";
+import { generateClient } from "aws-amplify/data";
 import { Separator } from "@/components/ui/separator";
 import { Loader2 } from "lucide-react";
 import { DEFAULT_CATEGORY_ORDER, getCategoryPresentation } from "@/lib/categoryPresentation";
-import { countCompletedInCategory, subscribeProgress } from "@/lib/progress";
+import type { Schema } from "@/amplify/data/resource";
+
+const client = generateClient<Schema>();
 
 type CategoryEntry = { name: string; label: string; count: number };
 
@@ -25,19 +32,37 @@ export default function CategoryPracticeGrid() {
   const [categories, setCategories] = useState<CategoryEntry[]>([]);
   const [isLoading, setIsLoading] = useState(authenticated);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [, setProgressTick] = useState(0);
-
-  const refreshProgress = useCallback(() => setProgressTick((n) => n + 1), []);
+  const [completionsByCategory, setCompletionsByCategory] = useState<Record<string, number>>({});
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    return subscribeProgress(refreshProgress);
-  }, [refreshProgress]);
+    if (!authenticated) { setUserId(null); setCompletionsByCategory({}); return; }
+    getCurrentUser().then(({ userId: id }) => setUserId(id)).catch(() => { });
+  }, [authenticated]);
+
+  useEffect(() => {
+    if (!userId) return;
+    const sub = client.models.Recording.observeQuery({
+      filter: { userId: { eq: userId }, status: { eq: "COMPLETED" } },
+    }).subscribe({
+      next: ({ items }) => {
+        const counts: Record<string, number> = {};
+        for (const rec of items) {
+          const cat = rec.dialogueId?.split("/")?.[1];
+          if (cat) counts[cat] = (counts[cat] ?? 0) + 1;
+        }
+        setCompletionsByCategory(counts);
+      },
+      error: () => { /* ignore */ },
+    });
+    return () => sub.unsubscribe();
+  }, [userId]);
 
   useEffect(() => {
     if (!authenticated) return;
     fetchUserAttributes()
       .then((attrs) => setGivenName(attrs.given_name ?? ""))
-      .catch(() => {});
+      .catch(() => { });
   }, [authenticated]);
 
   useEffect(() => {
@@ -92,7 +117,7 @@ export default function CategoryPracticeGrid() {
   // ── Authenticated dashboard ───────────────────────────────────────────────
   if (authenticated) {
     const greeting = givenName ? `Welcome back, ${givenName}` : "Welcome back";
-    const totalDone = categories.reduce((sum, c) => sum + countCompletedInCategory(c.name), 0);
+    const totalDone = categories.reduce((sum, c) => sum + (completionsByCategory[c.name] ?? 0), 0);
     const totalCount = categories.reduce((sum, c) => sum + c.count, 0);
 
     return (
@@ -119,11 +144,15 @@ export default function CategoryPracticeGrid() {
               display: "flex", alignItems: "center", gap: 16,
             }}>
               <div style={{ flex: 1 }}>
-                <div style={{ display: "flex", justifyContent: "space-between",
-                  fontSize: 12, color: "var(--fg-muted)", marginBottom: 6 }}>
+                <div style={{
+                  display: "flex", justifyContent: "space-between",
+                  fontSize: 12, color: "var(--fg-muted)", marginBottom: 6
+                }}>
                   <span>Overall progress</span>
-                  <span style={{ fontFamily: "var(--font-mono)", fontWeight: 600,
-                    color: "var(--brand)" }}>
+                  <span style={{
+                    fontFamily: "var(--font-mono)", fontWeight: 600,
+                    color: "var(--brand)"
+                  }}>
                     {totalDone} / {totalCount} completed
                   </span>
                 </div>
@@ -142,15 +171,19 @@ export default function CategoryPracticeGrid() {
           <Separator style={{ marginBottom: 24 }} />
 
           {isLoading ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 8,
-              color: "var(--fg-muted)", fontSize: 14, padding: "24px 0" }}>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 8,
+              color: "var(--fg-muted)", fontSize: 14, padding: "24px 0"
+            }}>
               <Loader2 className="animate-spin" style={{ width: 16, height: 16 }} />
               Loading categories…
             </div>
           ) : loadError ? (
-            <p style={{ fontSize: 13, color: "var(--danger)", background: "var(--danger-soft)",
+            <p style={{
+              fontSize: 13, color: "var(--danger)", background: "var(--danger-soft)",
               border: "1px solid rgba(220,38,38,0.2)", borderRadius: 8,
-              padding: "10px 14px" }}>
+              padding: "10px 14px"
+            }}>
               {loadError}
             </p>
           ) : categories.length === 0 ? (
@@ -166,7 +199,7 @@ export default function CategoryPracticeGrid() {
               {categories.map((cat) => {
                 const p = getCategoryPresentation(cat.name);
                 const Icon = p.icon;
-                const done = countCompletedInCategory(cat.name);
+                const done = completionsByCategory[cat.name] ?? 0;
                 const pct = cat.count > 0 ? Math.min(100, (done / cat.count) * 100) : 0;
 
                 return (
@@ -197,7 +230,8 @@ export default function CategoryPracticeGrid() {
                       <div style={{
                         width: 42, height: 42, borderRadius: 10,
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        ...p.iconStyle }}>
+                        ...p.iconStyle
+                      }}>
                         <Icon style={{ width: 20, height: 20 }} />
                       </div>
 
@@ -232,7 +266,7 @@ export default function CategoryPracticeGrid() {
                           fontFamily: "var(--font-mono)", fontWeight: done > 0 ? 600 : 400,
                           margin: 0,
                         }}>
-                          {done > 0 ? `${done} / ${cat.count} done` : "Not started"}
+                          {done > 0 ? `${cat.count} / ${cat.count} done` : "Not started"}
                         </p>
                       </div>
                     </div>
@@ -301,7 +335,8 @@ export default function CategoryPracticeGrid() {
                     <div style={{
                       width: 42, height: 42, borderRadius: 10,
                       display: "flex", alignItems: "center", justifyContent: "center",
-                      ...p.iconStyle }}>
+                      ...p.iconStyle
+                    }}>
                       <Icon style={{ width: 20, height: 20 }} />
                     </div>
                     <div>
@@ -320,8 +355,10 @@ export default function CategoryPracticeGrid() {
                         height: 4, background: "var(--border-subtle)",
                         borderRadius: 2, marginBottom: 5,
                       }} />
-                      <p style={{ fontSize: 11, color: "var(--fg-muted)",
-                        fontFamily: "var(--font-mono)", margin: 0 }}>
+                      <p style={{
+                        fontSize: 11, color: "var(--fg-muted)",
+                        fontFamily: "var(--font-mono)", margin: 0
+                      }}>
                         — / —
                       </p>
                     </div>
