@@ -312,7 +312,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      // if (!allRecorded) throw new Error("Please record all segments before submitting.");
+      if (!allRecorded) throw new Error("Please record all segments before submitting.");
       const { userId } = await getCurrentUser();
 
       // ── Subscription / free-attempt gate ────────────────────────────────
@@ -638,7 +638,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <button
             onClick={() => handleSubmit(segmentStates)}
-            disabled={isSubmitting}
+            disabled={isSubmitting || !allRecorded}
             style={{
               padding: "11px 28px", borderRadius: 10,
               background: allRecorded && !isSubmitting ? "var(--brand)" : "var(--bg-sunken)",
