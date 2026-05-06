@@ -1,8 +1,13 @@
 "use client";
 
+import { Amplify } from "aws-amplify";
+import outputs from "@/amplify_outputs.json";
+Amplify.configure(outputs, { ssr: true });
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { list, downloadData } from "aws-amplify/storage";
+import { getCurrentUser } from "aws-amplify/auth";
 import { generateClient } from "aws-amplify/data";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -43,6 +48,8 @@ export default function CategoryPage({ params }: { params: { category: string } 
   useEffect(() => {
     async function load() {
       try {
+        const { userId } = await getCurrentUser();
+        console.log('userId', userId);
         const { items } = await list({ path: `dialogues/${category}/`, options: { listAll: true } });
 
         const map = new Map<string, { audioPath?: string; transcriptPath?: string }>();
@@ -88,7 +95,10 @@ export default function CategoryPage({ params }: { params: { category: string } 
         const progressEntries = await Promise.all(
           enriched.map(async (dialogue) => {
             const recordingsResult = await client.models.Recording.list({
-              filter: { dialogueId: { eq: dialogue.basePath } },
+              filter: {
+                dialogueId: { eq: dialogue.basePath },
+                userId: { eq: userId },
+              },
             });
             if (recordingsResult.errors) {
               throw new Error(`Failed to load attempts for ${dialogue.basePath}`);
@@ -112,7 +122,7 @@ export default function CategoryPage({ params }: { params: { category: string } 
                 .map((item) => item?.overallScore)
                 .filter((score): score is number => typeof score === "number");
               if (validScores.length > 0) {
-                latestOverallScore = validScores[validScores.length - 1];
+                latestOverallScore = validScores[validScores.sort((a, b) => a - b).length - 1];
               }
             }
 

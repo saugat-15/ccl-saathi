@@ -1,19 +1,36 @@
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 import { naatiProcessor } from '../functions/naatiProcessor/resource.js';
 import { transcriptUpdater } from '../functions/transcriptUpdater/resource.js';
+import { postConfirmation } from '../functions/postConfirmation/resource.js';
 
 const schema = a.schema({
 
   // ─── USER ───────────────────────────────────────────────
   User: a.model({
+    // Public profile — owner can read/write non-billing fields freely
+    recordings: a.hasMany('Recording', 'userId'),
+    // Billing — read-only for owner; written only by trusted Lambdas via BillingProfile
+    billing: a.hasOne('BillingProfile', 'userId'),
+  })
+    .authorization(allow => [
+      allow.ownerDefinedIn('id'),
+      allow.group('admin'),
+    ]),
+
+  // ─── BILLING PROFILE ────────────────────────────────────────────────────────
+  // Owner-readable, Lambda-writable only. Stripe webhooks and the scoring
+  // pipeline are the sole writers. The owner cannot mutate these fields directly.
+  BillingProfile: a.model({
+    userId: a.id().required(),
     hasSubscription: a.boolean().default(false),
     subscriptionExpiresAt: a.datetime(),
     stripeCustomerId: a.string(),
     stripeSubscriptionId: a.string(),
-    recordings: a.hasMany('Recording', 'userId'),
+    freeAttempts: a.integer().default(0),
+    user: a.belongsTo('User', 'userId'),
   })
     .authorization(allow => [
-      allow.owner(),
+      allow.ownerDefinedIn('userId').to(['read']),
       allow.group('admin'),
     ]),
 
@@ -64,7 +81,7 @@ const schema = a.schema({
     feedback: a.hasOne('Feedback', 'recordingId'),
   })
     .authorization(allow => [
-      allow.owner(),
+      allow.ownerDefinedIn('userId'),
       allow.group('admin'),
     ]),
 
@@ -113,6 +130,7 @@ const schema = a.schema({
 }).authorization((allow) => [
   allow.resource(naatiProcessor),
   allow.resource(transcriptUpdater),
+  allow.resource(postConfirmation),
 ]);
 
 export type Schema = ClientSchema<typeof schema>;

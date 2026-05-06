@@ -422,7 +422,7 @@ export default function MarketingSections({ isAuthenticated = false }: { isAuthe
       </section>
 
       {/* Waitlist */}
-      <section className="bg-primary/5 border-b border-border/60">
+      <section id="waitlist" className="bg-primary/5 border-b border-border/60 scroll-mt-16">
         <div className="max-w-6xl mx-auto px-5 py-16 md:py-20 text-center">
           <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
             Be first to get new dialogues and exam tips

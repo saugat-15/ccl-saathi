@@ -1,5 +1,9 @@
 "use client";
 
+import { Amplify } from "aws-amplify";
+import outputs from "@/amplify_outputs.json";
+Amplify.configure(outputs, { ssr: true });
+
 import { usePathname } from "next/navigation";
 import { useAuthenticator } from "@aws-amplify/ui-react";
 import AuthPage from "./AuthPage";
@@ -7,6 +11,7 @@ import AuthPage from "./AuthPage";
 const PUBLIC_PREFIXES = [
   "/",
   "/login",
+  "/pricing",
   "/privacy",
   "/terms",
   "/contact",

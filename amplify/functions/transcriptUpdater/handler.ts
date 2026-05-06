@@ -351,42 +351,52 @@ async function scoreTranscript(
         },
         body: JSON.stringify({
             model: env.OPENAI_SCORER_MODEL ?? 'gpt-4.1-mini',
-            temperature: 0.2,
+            temperature: 0,
             response_format: { type: 'json_object' },
             messages: [
                 {
                     role: 'system',
                     content: [
-                        'You are an expert NAATI CCL examiner assistant.',
-                        'Your job is to evaluate an interpretation attempt using the provided source segment and user-rendered interpretation.',
-                        'Score strictly by meaning transfer, completeness, terminology accuracy, and fluency.',
-                        'Do not invent missing evidence. If uncertain, say so briefly.',
-                        'You must return ONLY valid JSON matching the required schema.',
-                        'SCORING PRINCIPLES:',
-                        '1) Meaning Accuracy (0-100): How correctly the user preserved core meaning.',
-                        '2) Completeness (0-100): How much important information was omitted/added.',
-                        '3) Terminology (0-100): Correct handling of key domain terms, entities, numbers, dates.',
-                        '4) Fluency (0-100): Clarity/coherence of interpretation in target language.',
-                        '5) Overall Score (0-100): weighted result = round(0.45*accuracy + 0.25*completeness + 0.20*terminology + 0.10*fluency).',
-                        'RULES:',
-                        '- Penalize mistranslations that change intent.',
-                        '- Penalize omissions of critical details.',
-                        '- Penalize hallucinated additions not present in source.',
-                        '- Minor grammar issues without meaning loss should be light penalties.',
-                        '- Keep feedback concrete and actionable.',
-                        '- Keep explanations concise.',
-                    ].join(' '),
+                        'You are a NAATI CCL examiner conducting a formal assessment. Your scores must reflect actual interpretation quality based solely on what is literally present in userTranscript.',
+                        '',
+                        'STEP 1 — VALIDITY CHECK: Before scoring, check if userTranscript contains a plausible interpretation of the source dialogue.',
+                        'If userTranscript is empty, nonsensical, random noise, unrelated text, or does not interpret any of the source content → ALL scores must be 0–10.',
+                        'If userTranscript only partially covers some segments → score only what is present; missing segments score 0.',
+                        '',
+                        'STEP 2 — ATTRIBUTION: Split userTranscript into portions and attribute each portion to the corresponding referenceSegment in order.',
+                        'Each referenceSegment has an expectedInterpretation — compare the attributed portion directly to that.',
+                        '',
+                        'STEP 3 — SCORE EACH SEGMENT using this rubric (use the full 0–100 range):',
+                        '• 0–15: Absent, nonsensical, or completely irrelevant to that segment.',
+                        '• 16–35: Attempted but major meaning loss — wrong language, most content missing or wrong.',
+                        '• 36–55: Partial — some correct elements but significant omissions or mistranslations.',
+                        '• 56–69: Near-pass — most meaning present but notable gaps or inaccuracies.',
+                        '• 70–79: Pass — meaning transferred, minor omissions or imprecision only.',
+                        '• 80–89: Good — accurate with only minor terminology gaps.',
+                        '• 90–100: Excellent — near-perfect, correct terminology, complete meaning.',
+                        '',
+                        'MANDATORY SCORING RULES:',
+                        '1. A score ≥ 70 REQUIRES citing specific text from userTranscript that proves correct meaning transfer. If you cannot cite it, the score must be below 50.',
+                        '2. NEVER give benefit of the doubt. Default to the lower score when uncertain.',
+                        '3. If the user repeated the source language instead of interpreting, accuracy = 0.',
+                        '4. If a segment portion is absent from userTranscript, that segment scores 0 on all dimensions.',
+                        '5. Scores must be integers.',
+                        '6. overallScore = round(0.45×accuracy + 0.25×completeness + 0.20×terminology + 0.10×fluency).',
+                        '7. Produce EXACTLY one segmentFeedback entry per referenceSegment.',
+                        '8. Comments must be factual and cite specific evidence from userTranscript.',
+                        '9. You must return ONLY valid JSON matching the required schema.',
+                    ].join('\n'),
                 },
                 {
                     role: 'user',
                     content: JSON.stringify({
-                        task: 'Evaluate this NAATI CCL attempt.',
+                        task: 'Score this NAATI CCL attempt segment by segment. Apply the validity check first. Be strict — only reward what is demonstrably present in userTranscript.',
                         context: {
                             ...context,
                             sourceLanguage: 'mixed english-nepali',
                         },
                         referenceSegments,
-                        userSegments: [{ segmentIndex: 0, userText }],
+                        userTranscript: userText,
                         outputSchema: {
                             recordingId: 'string',
                             dialogueId: 'string',
@@ -497,6 +507,42 @@ async function getOpenAiApiKey(): Promise<string> {
     }
     cachedOpenAiApiKey = parseOpenAiSecretString(response.SecretString);
     return cachedOpenAiApiKey;
+}
+
+async function incrementFreeAttempts(
+    dataClient: ReturnType<typeof generateClient<Schema>>,
+    userId: string,
+): Promise<void> {
+    try {
+        const billingList = await dataClient.models.BillingProfile.list({
+            filter: { userId: { eq: userId } },
+        });
+        if (billingList.errors || billingList.data.length === 0) {
+            console.warn('incrementFreeAttempts: billing profile not found', { userId });
+            return;
+        }
+        const billing = billingList.data[0];
+        const hasValidSubscription =
+            billing.hasSubscription === true &&
+            (billing.subscriptionExpiresAt == null ||
+                new Date(billing.subscriptionExpiresAt) > new Date());
+
+        if (hasValidSubscription) {
+            return; // subscribers don't consume free attempts
+        }
+
+        await dataClient.models.BillingProfile.update({
+            id: billing.id,
+            freeAttempts: (billing.freeAttempts ?? 0) + 1,
+        });
+        console.info('incrementFreeAttempts: incremented', { userId, was: billing.freeAttempts });
+    } catch (err) {
+        // Non-fatal: log and continue — a failed counter update must not fail the whole pipeline
+        console.error('incrementFreeAttempts: error', {
+            userId,
+            message: err instanceof Error ? err.message : String(err),
+        });
+    }
 }
 
 export const handler = async (event: unknown): Promise<{ statusCode: number; body: string }> => {
@@ -723,6 +769,11 @@ export const handler = async (event: unknown): Promise<{ statusCode: number; bod
                 recordingId,
                 totalElapsedMs: elapsedMs(recordStartedAt),
             });
+
+            // Increment free-attempt counter server-side.
+            // The owner cannot write User fields (schema enforces read-only for owner),
+            // so this Lambda (IAM auth) is the sole writer of freeAttempts.
+            await incrementFreeAttempts(dataClient, recordingGet.data.userId);
 
             results.push({ key, recordingId });
         } catch (err) {
