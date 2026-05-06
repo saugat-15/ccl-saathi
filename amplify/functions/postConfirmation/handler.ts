@@ -21,13 +21,7 @@ export const handler: PostConfirmationTriggerHandler = async (event) => {
     if (!existing) {
       // owner format matches what AppSync sets for userPool auth: sub::username
       console.log('user does not exist, creating user', sub);
-      const createUser = await client.models.User.create(
-        {
-          id: sub,
-          hasSubscription: false,
-          freeAttempts: 0,
-        },
-      );
+      const createUser = await client.models.User.create({ id: sub });
       if (createUser.errors) {
         console.error('error creating user', createUser.errors);
         throw new Error(createUser.errors[0].message);
@@ -35,6 +29,26 @@ export const handler: PostConfirmationTriggerHandler = async (event) => {
       console.log('user created', createUser.data?.id);
     } else {
       console.log('user already exists', existing?.id);
+    }
+
+    // Always ensure a BillingProfile exists — handles accounts created before
+    // BillingProfile was introduced, or cases where the previous run failed mid-way.
+    const { data: billingData } = await client.models.BillingProfile.list({
+      filter: { userId: { eq: sub } },
+    });
+    if (!billingData?.[0]) {
+      const createBilling = await client.models.BillingProfile.create({
+        userId: sub,
+        hasSubscription: false,
+        freeAttempts: 0,
+      });
+      if (createBilling.errors) {
+        console.error('error creating billing profile', createBilling.errors);
+        throw new Error(createBilling.errors[0].message);
+      }
+      console.log('billing profile created', createBilling.data?.userId);
+    } else {
+      console.log('billing profile already exists', billingData[0].userId);
     }
   }
 

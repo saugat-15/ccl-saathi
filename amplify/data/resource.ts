@@ -7,15 +7,30 @@ const schema = a.schema({
 
   // ─── USER ───────────────────────────────────────────────
   User: a.model({
-    hasSubscription: a.boolean().default(false),
-    subscriptionExpiresAt: a.datetime(),
-    stripeCustomerId: a.string(),
-    freeAttempts: a.integer().default(0),
-    stripeSubscriptionId: a.string(),
+    // Public profile — owner can read/write non-billing fields freely
     recordings: a.hasMany('Recording', 'userId'),
+    // Billing — read-only for owner; written only by trusted Lambdas via BillingProfile
+    billing: a.hasOne('BillingProfile', 'userId'),
   })
     .authorization(allow => [
       allow.ownerDefinedIn('id'),
+      allow.group('admin'),
+    ]),
+
+  // ─── BILLING PROFILE ────────────────────────────────────────────────────────
+  // Owner-readable, Lambda-writable only. Stripe webhooks and the scoring
+  // pipeline are the sole writers. The owner cannot mutate these fields directly.
+  BillingProfile: a.model({
+    userId: a.id().required(),
+    hasSubscription: a.boolean().default(false),
+    subscriptionExpiresAt: a.datetime(),
+    stripeCustomerId: a.string(),
+    stripeSubscriptionId: a.string(),
+    freeAttempts: a.integer().default(0),
+    user: a.belongsTo('User', 'userId'),
+  })
+    .authorization(allow => [
+      allow.ownerDefinedIn('userId').to(['read']),
       allow.group('admin'),
     ]),
 

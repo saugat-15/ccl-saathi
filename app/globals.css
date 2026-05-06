@@ -163,7 +163,7 @@
     --shadow-sm:    0 2px 4px rgba(15,36,23,.06), 0 1px 2px rgba(15,36,23,.04);
     --shadow-md:    0 6px 14px rgba(15,36,23,.08), 0 2px 4px rgba(15,36,23,.04);
     --shadow-lg:    0 16px 32px rgba(15,36,23,.12), 0 4px 8px rgba(15,36,23,.06);
-    --shadow-brand: 0 10px 28px rgba(58,125,78,.30);
+    --shadow-brand: none;
     --shadow-rec:   0 8px 24px rgba(239,68,68,.35);
     --shadow-focus: 0 0 0 3px rgba(58,125,78,.25);
 
@@ -183,7 +183,7 @@
   --popover:                148 18% 10%;
   --popover-foreground:     113 8% 86%;
   --primary:                138 25% 49%;   /* forest-400 — lighter for dark bg contrast */
-  --primary-foreground:     148 22% 8%;
+  --primary-foreground:     0 0% 100%;
   --secondary:              148 14% 13%;
   --secondary-foreground:   113 8% 86%;
   --muted:                  148 14% 12%;
@@ -232,7 +232,7 @@
   --shadow-sm:    0 2px 4px rgba(0,0,0,.4), 0 1px 2px rgba(0,0,0,.3);
   --shadow-md:    0 6px 14px rgba(0,0,0,.45), 0 2px 4px rgba(0,0,0,.3);
   --shadow-lg:    0 16px 32px rgba(0,0,0,.55), 0 4px 8px rgba(0,0,0,.3);
-  --shadow-brand: 0 10px 28px rgba(94,156,109,.35);
+  --shadow-brand: none;
   --shadow-rec:   0 8px 24px rgba(239,68,68,.45);
   --shadow-focus: 0 0 0 3px rgba(94,156,109,.35);
 

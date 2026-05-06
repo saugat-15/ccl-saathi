@@ -148,7 +148,7 @@ export default function CategoryPracticeGrid() {
                   display: "flex", justifyContent: "space-between",
                   fontSize: 12, color: "var(--fg-muted)", marginBottom: 6
                 }}>
-                  <span>Overall progress</span>
+                  <span>Overall Progress</span>
                   <span style={{
                     fontFamily: "var(--font-mono)", fontWeight: 600,
                     color: "var(--brand)"
@@ -266,7 +266,7 @@ export default function CategoryPracticeGrid() {
                           fontFamily: "var(--font-mono)", fontWeight: done > 0 ? 600 : 400,
                           margin: 0,
                         }}>
-                          {done > 0 ? `${cat.count} / ${cat.count} done` : "Not started"}
+                          {done > 0 ? `${done} / ${cat.count} done` : "Not started"}
                         </p>
                       </div>
                     </div>

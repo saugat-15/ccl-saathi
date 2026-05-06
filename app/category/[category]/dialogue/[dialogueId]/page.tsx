@@ -7,6 +7,7 @@ Amplify.configure(outputs, { ssr: true });
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { generateClient } from "aws-amplify/data";
+import { getCurrentUser } from "aws-amplify/auth";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ChevronLeft, Loader2, FileText } from "lucide-react";
@@ -20,6 +21,7 @@ type RecordingItem = {
   id: string;
   createdAt: string | null | undefined;
   status: string | null | undefined;
+  errorMessage: string | null | undefined;
 };
 
 type FeedbackItem = {
@@ -102,14 +104,20 @@ export default function DialogueAttemptsPage({
   const category = params.category;
   const dialogueBasePath = useMemo(() => decodeDialogueId(params.dialogueId), [params.dialogueId]);
 
+  const [userId, setUserId] = useState<string | null>(null);
   const [recordings, setRecordings] = useState<RecordingItem[]>([]);
   const [feedbacks, setFeedbacks] = useState<FeedbackItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  useEffect(() => {
+    getCurrentUser().then(({ userId: uid }) => setUserId(uid)).catch(() => setUserId(null));
+  }, []);
+
   // Subscribe to recordings for this dialogue
   useEffect(() => {
+    if (!userId) return;
     const sub = client.models.Recording.observeQuery({
       filter: { dialogueId: { eq: dialogueBasePath } },
     }).subscribe({
@@ -129,10 +137,11 @@ export default function DialogueAttemptsPage({
       },
     });
     return () => sub.unsubscribe();
-  }, [dialogueBasePath]);
+  }, [dialogueBasePath, userId]);
 
   // Subscribe to feedback for this dialogue
   useEffect(() => {
+    if (!userId) return;
     const sub = client.models.Feedback.observeQuery({
       filter: { dialogueId: { eq: dialogueBasePath } },
     }).subscribe({
@@ -161,7 +170,7 @@ export default function DialogueAttemptsPage({
       },
     });
     return () => sub.unsubscribe();
-  }, [dialogueBasePath]);
+  }, [dialogueBasePath, userId]);
 
   // Derive attempt rows from live recordings + feedbacks
   const attempts = useMemo(() => {
@@ -176,6 +185,7 @@ export default function DialogueAttemptsPage({
       id: r.id,
       createdAt: r.createdAt ?? null,
       status: r.status ?? null,
+      errorMessage: r.errorMessage ?? null,
       overallScore: scoreByRecording.get(r.id) ?? null,
     }));
   }, [recordings, feedbacks]);
@@ -196,7 +206,17 @@ export default function DialogueAttemptsPage({
 
   const processingStatuses = new Set(["UPLOADED", "PROCESSING", "SCORING"]);
   const selectedStatus = selectedRecording?.status ?? null;
-  const isProcessing = selectedStatus !== null && processingStatuses.has(selectedStatus);
+
+  const STALE_MS = 10 * 60 * 1000;
+  function isStale(createdAt: string | null | undefined) {
+    if (!createdAt) return false;
+    return Date.now() - new Date(createdAt).getTime() > STALE_MS;
+  }
+
+  const isProcessing =
+    selectedStatus !== null &&
+    processingStatuses.has(selectedStatus) &&
+    !isStale(selectedRecording?.createdAt);
 
   return (
     <div className="min-h-screen bg-background">
@@ -258,7 +278,8 @@ export default function DialogueAttemptsPage({
                   : "var(--fg-muted)";
                 const isPending = attempt.overallScore === null &&
                   attempt.status !== null &&
-                  processingStatuses.has(attempt.status);
+                  processingStatuses.has(attempt.status) &&
+                  !isStale(attempt.createdAt);
 
                 return (
                   <li key={attempt.id}>
@@ -289,6 +310,11 @@ export default function DialogueAttemptsPage({
                           >
                             {fmtDate(attempt.createdAt)}
                           </p>
+                          {attempt.status === "FAILED" && attempt.errorMessage && (
+                            <p className="text-xs mt-1 text-destructive">
+                              {attempt.errorMessage}
+                            </p>
+                          )}
                         </div>
                         <div className="text-right shrink-0">
                           {typeof attempt.overallScore === "number" ? (
@@ -348,6 +374,15 @@ export default function DialogueAttemptsPage({
                   </p>
                   <p className="text-xs" style={{ color: "var(--fg-subtle)" }}>
                     This page will update automatically.
+                  </p>
+                </div>
+              ) : selectedStatus !== null && processingStatuses.has(selectedStatus) && isStale(selectedRecording?.createdAt) ? (
+                <div
+                  className="rounded-xl border px-6 py-10 text-center"
+                  style={{ borderColor: "var(--border-subtle)", background: "var(--bg-surface)" }}
+                >
+                  <p className="text-sm" style={{ color: "var(--fg-muted)" }}>
+                    Processing timed out. Please start a new attempt.
                   </p>
                 </div>
               ) : (

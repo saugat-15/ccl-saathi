@@ -35,10 +35,10 @@ function getInitials(given: string, family: string, email: string) {
 }
 
 const GUEST_NAV = [
-  { href: "/#features",    label: "Features" },
-  { href: "/#how-it-works",label: "How it works" },
-  { href: "/pricing",      label: "Pricing" },
-  { href: "/#resources",   label: "Resources" },
+  { href: "/#features", label: "Features" },
+  { href: "/#how-it-works", label: "How it works" },
+  { href: "/pricing", label: "Pricing" },
+  { href: "/#resources", label: "Resources" },
 ] as const;
 
 
@@ -70,30 +70,30 @@ function ThemeToggleButton() {
 }
 
 export default function Navbar() {
-  const pathname  = usePathname();
-  const router    = useRouter();
+  const pathname = usePathname();
+  const router = useRouter();
   const { signOut, user, authStatus } = useAuthenticator();
 
-  const [givenName,  setGivenName]  = useState("");
+  const [givenName, setGivenName] = useState("");
   const [familyName, setFamilyName] = useState("");
 
-  const email         = user?.signInDetails?.loginId ?? "";
+  const email = user?.signInDetails?.loginId ?? "";
   const authenticated = authStatus === "authenticated";
 
   useEffect(() => {
     if (!authenticated) return;
     fetchUserAttributes()
       .then((attrs) => {
-        setGivenName(attrs.given_name  ?? "");
+        setGivenName(attrs.given_name ?? "");
         setFamilyName(attrs.family_name ?? "");
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [authenticated]);
 
-  const initials    = getInitials(givenName, familyName, email);
+  const initials = getInitials(givenName, familyName, email);
   const displayName = givenName && familyName ? `${givenName} ${familyName}` : givenName || email;
   const isLoginRoute = pathname === "/login";
-  const navLinks     = authenticated ? [] : GUEST_NAV;
+  const navLinks = authenticated ? [] : GUEST_NAV;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -211,10 +211,6 @@ export default function Navbar() {
                     <Settings className="h-4 w-4" />
                     Settings
                     <span className="ml-auto text-xs text-muted-foreground">Soon</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push("/help")} disabled>
-                    <HelpCircle className="h-4 w-4" />
-                    Help
                   </DropdownMenuItem>
 
                   {!IS_PRO && (

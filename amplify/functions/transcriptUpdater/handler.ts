@@ -509,6 +509,42 @@ async function getOpenAiApiKey(): Promise<string> {
     return cachedOpenAiApiKey;
 }
 
+async function incrementFreeAttempts(
+    dataClient: ReturnType<typeof generateClient<Schema>>,
+    userId: string,
+): Promise<void> {
+    try {
+        const billingList = await dataClient.models.BillingProfile.list({
+            filter: { userId: { eq: userId } },
+        });
+        if (billingList.errors || billingList.data.length === 0) {
+            console.warn('incrementFreeAttempts: billing profile not found', { userId });
+            return;
+        }
+        const billing = billingList.data[0];
+        const hasValidSubscription =
+            billing.hasSubscription === true &&
+            (billing.subscriptionExpiresAt == null ||
+                new Date(billing.subscriptionExpiresAt) > new Date());
+
+        if (hasValidSubscription) {
+            return; // subscribers don't consume free attempts
+        }
+
+        await dataClient.models.BillingProfile.update({
+            id: billing.id,
+            freeAttempts: (billing.freeAttempts ?? 0) + 1,
+        });
+        console.info('incrementFreeAttempts: incremented', { userId, was: billing.freeAttempts });
+    } catch (err) {
+        // Non-fatal: log and continue — a failed counter update must not fail the whole pipeline
+        console.error('incrementFreeAttempts: error', {
+            userId,
+            message: err instanceof Error ? err.message : String(err),
+        });
+    }
+}
+
 export const handler = async (event: unknown): Promise<{ statusCode: number; body: string }> => {
     const handlerStartedAt = Date.now();
     let dataClient: ReturnType<typeof generateClient<Schema>>;
@@ -733,6 +769,11 @@ export const handler = async (event: unknown): Promise<{ statusCode: number; bod
                 recordingId,
                 totalElapsedMs: elapsedMs(recordStartedAt),
             });
+
+            // Increment free-attempt counter server-side.
+            // The owner cannot write User fields (schema enforces read-only for owner),
+            // so this Lambda (IAM auth) is the sole writer of freeAttempts.
+            await incrementFreeAttempts(dataClient, recordingGet.data.userId);
 
             results.push({ key, recordingId });
         } catch (err) {

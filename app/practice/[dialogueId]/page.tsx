@@ -17,24 +17,16 @@ import { ChevronLeft, Play, Pause, Loader2, CheckCircle2, Lock, Zap, X } from "l
 
 const client = generateClient<Schema>();
 
-async function resolveUserRecord(userId: string) {
-  // Use list instead of get: with allow.owner(), get returns Unauthorized when
-  // the record doesn't exist (AppSync can't verify ownership on a null item).
-  // list returns an empty array instead, which we can handle cleanly.
-  const { data, errors } = await client.models.User.list({
-    filter: { id: { eq: userId } },
+async function resolveBillingProfile(userId: string) {
+  const { data, errors } = await client.models.BillingProfile.list({
+    filter: { userId: { eq: userId } },
   });
-
   if (errors?.length) {
     throw new Error(errors[0].message ?? "Failed to load your account. Please try again.");
   }
-
-  const record = data?.[0];
-  if (!record) {
-    throw new Error("Account not found. Please sign out and sign in again.");
-  }
-
-  return record;
+  // Profile may be absent for accounts created before BillingProfile was introduced.
+  // Treat missing profile as a fresh free-tier user.
+  return data?.[0] ?? { hasSubscription: false, subscriptionExpiresAt: null, freeAttempts: 0 };
 }
 
 type TranscriptSegment = {
@@ -249,13 +241,13 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
         const { userId } = await getCurrentUser();
 
         // ── Subscription / free-attempt gate ────────────────────────────────
-        const userRecord = await resolveUserRecord(userId);
+        const billing = await resolveBillingProfile(userId);
         const hasValidSubscription =
-          userRecord.hasSubscription === true &&
-          (userRecord.subscriptionExpiresAt == null ||
-            new Date(userRecord.subscriptionExpiresAt) > new Date());
+          billing.hasSubscription === true &&
+          (billing.subscriptionExpiresAt == null ||
+            new Date(billing.subscriptionExpiresAt) > new Date());
 
-        if (!hasValidSubscription && (userRecord.freeAttempts ?? 0) >= 2) {
+        if (!hasValidSubscription && (billing.freeAttempts ?? 0) >= 2) {
           setShowUpgradeModal(true);
           return;
         }
@@ -324,17 +316,15 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
       const { userId } = await getCurrentUser();
 
       // ── Subscription / free-attempt gate ────────────────────────────────
-      const userRecord = await resolveUserRecord(userId);
+      const billing = await resolveBillingProfile(userId);
       const hasValidSubscription =
-        userRecord.hasSubscription === true &&
-        (userRecord.subscriptionExpiresAt == null ||
-          new Date(userRecord.subscriptionExpiresAt) > new Date());
+        billing.hasSubscription === true &&
+        (billing.subscriptionExpiresAt == null ||
+          new Date(billing.subscriptionExpiresAt) > new Date());
 
-      if (!hasValidSubscription) {
-        if ((userRecord.freeAttempts ?? 0) >= 2) {
-          setShowUpgradeModal(true);
-          return;
-        }
+      if (!hasValidSubscription && (billing.freeAttempts ?? 0) >= 2) {
+        setShowUpgradeModal(true);
+        return;
       }
       // ────────────────────────────────────────────────────────────────────
 
@@ -361,13 +351,8 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
       await uploadData({ path: s3Key, data: combinedWav, options: { contentType: "audio/wav" } }).result;
       await client.models.Recording.update({ id: recording.id, s3Key });
 
-      // Increment free attempt count if not subscribed
-      if (!hasValidSubscription && userRecord) {
-        await client.models.User.update({
-          id: userId,
-          freeAttempts: (userRecord.freeAttempts ?? 0) + 1,
-        });
-      }
+      // freeAttempts is incremented server-side by the transcriptUpdater Lambda
+      // after successful processing — not here — to prevent client-side bypass.
 
       setSubmitDone(true);
     } catch (err) {

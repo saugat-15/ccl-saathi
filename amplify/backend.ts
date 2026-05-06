@@ -1,5 +1,6 @@
 import { defineBackend } from '@aws-amplify/backend';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import { Stack } from 'aws-cdk-lib';
 import { EventType } from 'aws-cdk-lib/aws-s3';
 import { LambdaDestination } from 'aws-cdk-lib/aws-s3-notifications';
 import { Function as LambdaFunction } from 'aws-cdk-lib/aws-lambda';
@@ -17,11 +18,12 @@ const backend = defineBackend({
   transcriptUpdater,
 });
 
+const processorLambda = backend.naatiProcessor.resources.lambda as LambdaFunction;
+const { account, region } = Stack.of(processorLambda);
+
 /** Secret ARN suffix varies; wildcard matches the concrete secret and future rotations of the same name. */
 const OPENAI_SECRET_RESOURCE_PATTERN =
-  'arn:aws:secretsmanager:ap-southeast-2:025711718416:secret:OpenAI_API_KEY-*';
-
-const processorLambda = backend.naatiProcessor.resources.lambda as LambdaFunction;
+  `arn:aws:secretsmanager:${region}:${account}:secret:OpenAI_API_KEY-*`;
 
 processorLambda.addToRolePolicy(
   new iam.PolicyStatement({
@@ -33,6 +35,7 @@ processorLambda.addToRolePolicy(
 
 processorLambda.addEnvironment('TRANSCRIBE_OUTPUT_PREFIX', 'naati-transcriptions/');
 processorLambda.addEnvironment('OPENAI_SECRET_ID', 'OpenAI_API_KEY');
+processorLambda.addEnvironment('MAX_CONCURRENT_PROCESSING', '2');
 
 // ── S3 event notifications ────────────────────────────────────────────────────
 

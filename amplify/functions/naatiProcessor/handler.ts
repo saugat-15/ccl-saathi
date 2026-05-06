@@ -381,6 +381,35 @@ export const handler = async (
         const { recordingId, cognitoId } = parsed;
         console.info('Parsed upload', { recordingId, cognitoId });
 
+        const { data: recordingCheck, errors: ownerCheckErrors } =
+            await dataClient.models.Recording.get({ id: recordingId });
+        if (ownerCheckErrors?.length || !recordingCheck) {
+            console.warn('Recording not found, skipping', { recordingId });
+            results.push({ recordingId, sourceKey: key, error: 'Recording not found' });
+            continue;
+        }
+
+        // Guard: max concurrent in-flight recordings per user
+        const MAX_CONCURRENT = Number(process.env.MAX_CONCURRENT_PROCESSING ?? '2');
+        const { data: inFlight } = await dataClient.models.Recording.list({
+            filter: {
+                userId: { eq: recordingCheck.userId },
+                or: [
+                    { status: { eq: 'UPLOADED' } },
+                    { status: { eq: 'PROCESSING' } },
+                    { status: { eq: 'SCORING' } },
+                ],
+            },
+        });
+        const othersInFlight = (inFlight ?? []).filter((r) => r.id !== recordingId);
+        if (othersInFlight.length >= MAX_CONCURRENT) {
+            const msg = 'You already have an attempt being processed. Please wait for it to complete.';
+            console.warn('Rate limit hit — too many in-flight recordings', { userId: recordingCheck.userId, recordingId, inFlightCount: othersInFlight.length });
+            await dataClient.models.Recording.update({ id: recordingId, status: 'FAILED', errorMessage: msg });
+            results.push({ recordingId, sourceKey: key, error: msg });
+            continue;
+        }
+
         const fileName = key.split('/').at(-1) ?? key;
         const outKey = transcriptOutputKey(outputPrefix, recordingId);
 

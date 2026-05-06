@@ -1,10 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthenticator } from "@aws-amplify/ui-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Check, ChevronLeft, Zap } from "lucide-react";
+import { Check, ChevronLeft, Zap, X } from "lucide-react";
 
 // Hardcoded until billing backend is ready
 const IS_PRO = false;
@@ -32,6 +33,7 @@ export default function PricingPage() {
   const router = useRouter();
   const { authStatus } = useAuthenticator();
   const authenticated = authStatus === "authenticated";
+  const [showComingSoon, setShowComingSoon] = useState(false);
 
   const currentPlan = IS_PRO ? "pro" : "free";
 
@@ -223,7 +225,7 @@ export default function PricingPage() {
                 </button>
               ) : authenticated ? (
                 <button
-                  onClick={() => {/* billing flow goes here */ }}
+                  onClick={() => setShowComingSoon(true)}
                   style={{
                     width: "100%", padding: "11px 20px", borderRadius: 10,
                     background: "var(--brand)", border: "none",
@@ -449,6 +451,62 @@ export default function PricingPage() {
         </div>
 
       </div>
+
+      {showComingSoon && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        style={{ background: "rgba(0,0,0,0.5)" }}
+        onClick={() => setShowComingSoon(false)}
+      >
+        <div
+          className="relative w-full max-w-sm rounded-2xl p-8 text-center shadow-xl"
+          style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)" }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            onClick={() => setShowComingSoon(false)}
+            className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+
+          <div
+            className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full"
+            style={{ background: "var(--amber-50)", border: "1px solid var(--amber-200)" }}
+          >
+            <Zap className="h-5 w-5" style={{ color: "var(--amber-600)" }} />
+          </div>
+
+          <h2 className="text-lg font-semibold text-foreground mb-2">
+            Pro is coming soon
+          </h2>
+          <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+            We&apos;re putting the finishing touches on billing. Join the waitlist and
+            we&apos;ll notify you the moment Pro is available — with early-access pricing.
+          </p>
+
+          <button
+            type="button"
+            onClick={() => {
+              setShowComingSoon(false);
+              router.push("/#waitlist");
+            }}
+            className="w-full rounded-lg py-2.5 text-sm font-semibold text-white transition-colors"
+            style={{ background: "var(--brand)" }}
+          >
+            Join the waitlist
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowComingSoon(false)}
+            className="mt-2 w-full rounded-lg py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Maybe later
+          </button>
+        </div>
+      </div>
+    )}
     </div>
   );
 }

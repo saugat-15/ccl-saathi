@@ -24,7 +24,7 @@ export default function Footer() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/#pricing" className="hover:text-foreground transition-colors">
+                  <Link href="/pricing" className="hover:text-foreground transition-colors">
                     Pricing
                   </Link>
                 </li>
@@ -52,31 +52,6 @@ export default function Footer() {
                   <Link href="/contact" className="hover:text-foreground transition-colors">
                     Contact
                   </Link>
-                </li>
-              </ul>
-            </div>
-            <div className="space-y-2">
-              <p className="font-semibold text-foreground">Social</p>
-              <ul className="space-y-1.5 text-muted-foreground">
-                <li>
-                  <a
-                    href="https://twitter.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-foreground transition-colors"
-                  >
-                    X (Twitter)
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="https://www.linkedin.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-foreground transition-colors"
-                  >
-                    LinkedIn
-                  </a>
                 </li>
               </ul>
             </div>
