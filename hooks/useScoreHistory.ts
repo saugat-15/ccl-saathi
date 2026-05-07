@@ -24,6 +24,7 @@ export function useScoreHistory(userId: string | null): UseScoreHistoryResult {
   useEffect(() => {
     if (!userId) {
       setData([]);
+      setIsLoading(false);
       return;
     }
 

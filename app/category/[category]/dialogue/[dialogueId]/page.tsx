@@ -10,10 +10,12 @@ import { generateClient } from "aws-amplify/data";
 import { getCurrentUser } from "aws-amplify/auth";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ChevronLeft, Loader2, FileText } from "lucide-react";
+import { ChevronLeft, FileText } from "lucide-react";
 import type { Schema } from "@/amplify/data/resource";
 import { cn } from "@/lib/utils";
 import ScoreReport, { type FeedbackDetails } from "@/app/components/attempt/ScoreReport";
+import { ScoreReportSkeleton } from "@/app/components/attempt/ScoreReportSkeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const client = generateClient<Schema>();
 
@@ -255,9 +257,15 @@ export default function DialogueAttemptsPage({
         <Separator className="mb-6" />
 
         {isLoading ? (
-          <div className="flex items-center gap-2 text-muted-foreground text-sm py-6">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Loading attempts…
+          <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-5 items-start">
+            <ul className="flex flex-col gap-2">
+              {[1, 2, 3].map((i) => (
+                <li key={i}>
+                  <Skeleton className="h-[76px] w-full rounded-xl" />
+                </li>
+              ))}
+            </ul>
+            <ScoreReportSkeleton />
           </div>
         ) : loadError ? (
           <p className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-4 py-3">
@@ -327,10 +335,7 @@ export default function DialogueAttemptsPage({
                               {Math.round(attempt.overallScore)}
                             </span>
                           ) : isPending ? (
-                            <Loader2
-                              className="h-3.5 w-3.5 animate-spin"
-                              style={{ color: "var(--fg-subtle)" }}
-                            />
+                            <Skeleton className="h-4 w-7 rounded-md ml-auto" />
                           ) : (
                             <span className="text-xs" style={{ color: "var(--fg-subtle)" }}>
                               {attempt.status ?? "—"}
@@ -366,18 +371,14 @@ export default function DialogueAttemptsPage({
               ) : selectedDetails !== null ? (
                 <ScoreReport details={selectedDetails} />
               ) : isProcessing ? (
-                <div
-                  className="rounded-xl border px-6 py-10 flex flex-col items-center justify-center gap-3 text-center"
-                  style={{ borderColor: "var(--border-subtle)", background: "var(--bg-surface)" }}
-                >
-                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                  <p className="text-sm" style={{ color: "var(--fg-muted)" }}>
-                    {selectedStatus === "SCORING" ? "Scoring your interpretation…" : "Processing your recording…"}
-                  </p>
-                  <p className="text-xs" style={{ color: "var(--fg-subtle)" }}>
-                    This page will update automatically.
-                  </p>
-                </div>
+                <ScoreReportSkeleton
+                  caption={
+                    selectedStatus === "SCORING"
+                      ? "Scoring your interpretation…"
+                      : "Processing your recording…"
+                  }
+                  subCaption="This page will update automatically."
+                />
               ) : selectedStatus !== null && processingStatuses.has(selectedStatus) && isStale(selectedRecording?.createdAt) ? (
                 <div
                   className="rounded-xl border px-6 py-10 text-center"

@@ -9,9 +9,10 @@ import { useRouter } from "next/navigation";
 import { generateClient } from "aws-amplify/data";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ChevronLeft, Loader2 } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import type { Schema } from "@/amplify/data/resource";
 import ScoreReport, { type FeedbackDetails } from "@/app/components/attempt/ScoreReport";
+import { ScoreReportSkeleton } from "@/app/components/attempt/ScoreReportSkeleton";
 
 const client = generateClient<Schema>();
 
@@ -126,10 +127,7 @@ export default function AttemptDetailPage({
         <Separator className="mb-6" />
 
         {isLoading ? (
-          <div className="flex items-center gap-2 text-muted-foreground text-sm py-6">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Loading report…
-          </div>
+          <ScoreReportSkeleton caption="Loading report…" />
         ) : loadError ? (
           <p className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-4 py-3">
             {loadError}

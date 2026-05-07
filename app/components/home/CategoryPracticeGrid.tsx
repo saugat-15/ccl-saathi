@@ -11,7 +11,7 @@ import { useAuthenticator } from "@aws-amplify/ui-react";
 import { fetchUserAttributes, getCurrentUser } from "aws-amplify/auth";
 import { generateClient } from "aws-amplify/data";
 import { Separator } from "@/components/ui/separator";
-import { Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { DEFAULT_CATEGORY_ORDER, getCategoryPresentation } from "@/lib/categoryPresentation";
 import type { Schema } from "@/amplify/data/resource";
 import ScoreChart from "@/app/components/home/ScoreChart";
@@ -202,12 +202,35 @@ export default function CategoryPracticeGrid() {
           <Separator style={{ marginBottom: 24 }} />
 
           {isLoading ? (
-            <div style={{
-              display: "flex", alignItems: "center", gap: 8,
-              color: "var(--fg-muted)", fontSize: 14, padding: "24px 0"
-            }}>
-              <Loader2 className="animate-spin" style={{ width: 16, height: 16 }} />
-              Loading categories…
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+                gap: 14,
+              }}
+            >
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                <div
+                  key={i}
+                  style={{
+                    background: "var(--bg-surface)",
+                    border: "1px solid var(--border-subtle)",
+                    borderRadius: 14,
+                    padding: "18px 18px 16px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 12,
+                  }}
+                >
+                  <Skeleton className="h-10 w-10 rounded-lg" />
+                  <Skeleton className="h-4 w-[140px] max-w-[85%]" />
+                  <Skeleton className="h-3 w-20" />
+                  <div style={{ marginTop: "auto", paddingTop: 4 }}>
+                    <Skeleton className="h-1 w-full rounded-sm mb-2" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : loadError ? (
             <p style={{

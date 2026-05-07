@@ -11,7 +11,8 @@ import { getCurrentUser } from "aws-amplify/auth";
 import { generateClient } from "aws-amplify/data";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ChevronLeft, Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ChevronLeft } from "lucide-react";
 import type { Schema } from "@/amplify/data/resource";
 
 type DialogueEntry = {
@@ -186,9 +187,31 @@ export default function CategoryPage({ params }: { params: { category: string } 
         <Separator className="mb-6" />
 
         {isLoading ? (
-          <div className="flex items-center gap-2 text-muted-foreground text-sm py-6">
-            <Loader2 className="h-4 w-4 animate-spin" />Loading…
-          </div>
+          <ul className="flex flex-col gap-3">
+            {[1, 2, 3].map((i) => (
+              <li key={i}>
+                <div
+                  style={{
+                    background: "var(--bg-surface)",
+                    border: "1px solid var(--border-subtle)",
+                    borderRadius: 14,
+                    padding: "18px 20px",
+                  }}
+                >
+                  <div className="flex justify-between items-center mb-3">
+                    <Skeleton className="h-5 w-16" />
+                    <Skeleton className="h-4 w-8" />
+                  </div>
+                  <Skeleton className="h-5 w-48 max-w-[90%] mb-2" />
+                  <Skeleton className="h-4 w-full max-w-2xl mb-4" />
+                  <div className="flex gap-4 mt-3 items-center">
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-4 w-16 ml-auto" />
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
         ) : loadError ? (
           <p className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-4 py-3">
             {loadError}

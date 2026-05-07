@@ -8,7 +8,7 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { useScoreHistory } from "@/hooks/useScoreHistory";
-import { Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const chartConfig = {
   score: {
@@ -30,16 +30,26 @@ export default function ScoreChart({ userId }: Props) {
         background: "var(--bg-surface)",
         border: "1px solid var(--border-subtle)",
         borderRadius: 12,
-        padding: "18px 20px",
+        padding: "18px 20px 14px",
         marginBottom: 28,
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        color: "var(--fg-muted)",
-        fontSize: 13,
       }}>
-        <Loader2 className="animate-spin" style={{ width: 14, height: 14 }} />
-        Loading score history…
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14, gap: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-3 w-32" />
+          </div>
+          <div style={{ display: "flex", gap: 16 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end" }}>
+              <Skeleton className="h-3 w-12" />
+              <Skeleton className="h-5 w-10" />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end" }}>
+              <Skeleton className="h-3 w-14" />
+              <Skeleton className="h-5 w-10" />
+            </div>
+          </div>
+        </div>
+        <Skeleton className="h-[140px] w-full rounded-md" />
       </div>
     );
   }

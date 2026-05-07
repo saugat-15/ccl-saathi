@@ -14,6 +14,7 @@ import AudioRecorder from "@/app/components/AudioRecorder";
 import { ProcessingSteps } from "@/app/components/practice/ProcessingSteps";
 import { SegmentStepper } from "@/app/components/practice/SegmentStepper";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { ChevronLeft, Play, Pause, Loader2, CheckCircle2, Lock, Zap, X, RotateCcw, Trophy } from "lucide-react";
 
@@ -528,8 +529,25 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
         <Button variant="ghost" size="sm" onClick={() => router.push(`/category/${category}`)} className="gap-1.5 -ml-2 mb-6 text-muted-foreground">
           <ChevronLeft className="h-4 w-4" /> {toLabel(category)}
         </Button>
-        <div className="flex items-center gap-2 text-muted-foreground text-sm py-4">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+        <div className="space-y-4 py-2">
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-7 w-64 max-w-full" />
+          <Skeleton className="h-4 w-full max-w-xl" />
+          <Skeleton className="h-24 w-full rounded-xl mt-4" />
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="rounded-xl border p-4 space-y-3"
+              style={{ borderColor: "var(--border-subtle)", background: "var(--bg-surface)" }}
+            >
+              <div className="flex justify-between">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+              <Skeleton className="h-12 w-full rounded-lg" />
+              <Skeleton className="h-16 w-full rounded-lg" />
+            </div>
+          ))}
         </div>
       </div>
     </div>
