@@ -23,7 +23,6 @@ type Props = {
 
 export default function ScoreChart({ userId }: Props) {
   const { data, isLoading } = useScoreHistory(userId);
-  console.log('score data', data);
 
   if (isLoading) {
     return (
@@ -162,7 +161,7 @@ export default function ScoreChart({ userId }: Props) {
 
 function Stat({ label, value, trend }: { label: string; value: number; trend?: number }) {
   const color =
-    value >= 70 ? "var(--success)" : value >= 50 ? "var(--warning)" : "var(--danger)";
+    value >= 70 ? "var(--score-high)" : value >= 50 ? "var(--score-mid)" : "var(--score-low)";
 
   return (
     <div style={{ textAlign: "right" }}>
@@ -173,7 +172,7 @@ function Stat({ label, value, trend }: { label: string; value: number; trend?: n
           <span style={{
             fontSize: 10,
             fontWeight: 500,
-            color: trend > 0 ? "var(--success)" : "var(--danger)",
+            color: trend > 0 ? "var(--score-high)" : "var(--score-low)",
             marginLeft: 3,
           }}>
             {trend > 0 ? `+${trend}` : trend}

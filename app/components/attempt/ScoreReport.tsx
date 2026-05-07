@@ -20,17 +20,17 @@ const CIRCLE_R = 40;
 const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * CIRCLE_R;
 
 function getPerformanceLabel(score: number): { label: string; color: string } {
-  if (score >= 90) return { label: "Excellent", color: "var(--success)" };
-  if (score >= 80) return { label: "Good", color: "var(--success)" };
-  if (score >= 70) return { label: "Pass", color: "var(--success)" };
-  if (score >= 60) return { label: "Near Pass", color: "var(--warning)" };
-  return { label: "Needs Work", color: "var(--danger)" };
+  if (score >= 90) return { label: "Excellent", color: "var(--score-high)" };
+  if (score >= 80) return { label: "Good", color: "var(--score-high)" };
+  if (score >= 70) return { label: "Pass", color: "var(--score-high)" };
+  if (score >= 60) return { label: "Near Pass", color: "var(--score-mid)" };
+  return { label: "Needs Work", color: "var(--score-low)" };
 }
 
 function getScoreColor(score: number): string {
-  if (score >= 70) return "var(--success)";
-  if (score >= 50) return "var(--warning)";
-  return "var(--danger)";
+  if (score >= 70) return "var(--score-high)";
+  if (score >= 50) return "var(--score-mid)";
+  return "var(--score-low)";
 }
 
 function formatReadinessLevel(level: string): string {
@@ -42,9 +42,9 @@ function formatReadinessLevel(level: string): string {
 function getReadinessColor(level: string): string {
   // normalise to space-separated lowercase so word boundaries work on snake_case values
   const l = level.toLowerCase().replace(/[_-]/g, " ");
-  if (/\bnot\b|fail|below|unready|poor/.test(l)) return "var(--danger)";
-  if (/partial|developing|near|almost|borderline/.test(l)) return "var(--warning)";
-  return "var(--success)";
+  if (/\bnot\b|fail|below|unready|poor/.test(l)) return "var(--score-low)";
+  if (/partial|developing|near|almost|borderline/.test(l)) return "var(--score-mid)";
+  return "var(--score-high)";
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────
@@ -154,11 +154,11 @@ export default function ScoreReport({ details }: { details: FeedbackDetails }) {
         </div>
         <span
           className="flex items-center gap-1.5 shrink-0 text-xs font-bold px-3 py-1 rounded-full border"
-          style={{ color: "var(--success)", borderColor: "var(--success)" }}
+          style={{ color: "var(--score-high)", borderColor: "var(--score-high)" }}
         >
           <span
             className="w-1.5 h-1.5 rounded-full"
-            style={{ background: "var(--success)" }}
+            style={{ background: "var(--score-high)" }}
           />
           AI SCORED
         </span>
@@ -196,7 +196,7 @@ export default function ScoreReport({ details }: { details: FeedbackDetails }) {
             <span
               key={t}
               className="text-xs font-medium px-2.5 py-1 rounded-md"
-              style={{ color: "var(--success)" }}
+              style={{ color: "var(--score-high)" }}
             >
               {t}
             </span>
@@ -205,7 +205,10 @@ export default function ScoreReport({ details }: { details: FeedbackDetails }) {
             <span
               key={t}
               className="text-xs font-medium px-2.5 py-1 rounded-md"
-              style={{ background: "var(--danger-soft)", color: "var(--danger)" }}
+              style={{
+                background: "color-mix(in srgb, var(--score-low) 14%, transparent)",
+                color: "var(--score-low)",
+              }}
             >
               {t}
             </span>
@@ -230,7 +233,10 @@ export default function ScoreReport({ details }: { details: FeedbackDetails }) {
               <span
                 key={term}
                 className="text-xs px-2 py-0.5 rounded"
-                style={{ background: "var(--danger-soft)", color: "var(--danger)" }}
+                style={{
+                  background: "color-mix(in srgb, var(--score-low) 14%, transparent)",
+                  color: "var(--score-low)",
+                }}
               >
                 {term}
               </span>
@@ -258,7 +264,7 @@ export default function ScoreReport({ details }: { details: FeedbackDetails }) {
                 className="flex gap-2 text-xs"
                 style={{ color: "var(--fg-muted)" }}
               >
-                <span className="font-medium shrink-0" style={{ color: "var(--danger)" }}>
+                <span className="font-medium shrink-0" style={{ color: "var(--score-low)" }}>
                   Seg {err.segmentIndex ?? "?"}
                 </span>
                 <span>

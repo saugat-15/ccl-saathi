@@ -69,9 +69,9 @@ function parseJsonArray<T>(value: unknown): T[] {
 }
 
 function getScoreColor(score: number): string {
-  if (score >= 70) return "var(--success)";
-  if (score >= 50) return "var(--warning)";
-  return "var(--danger)";
+  if (score >= 70) return "var(--score-high)";
+  if (score >= 50) return "var(--score-mid)";
+  return "var(--score-low)";
 }
 
 function feedbackToDetails(fb: FeedbackItem): FeedbackDetails {
@@ -289,11 +289,13 @@ export default function DialogueAttemptsPage({
                       className={cn(
                         "w-full text-left rounded-xl px-4 py-3 border transition-all",
                         isSelected
-                          ? "border-[color:var(--brand)]"
+                          ? "border-[color:var(--progress-fill)]"
                           : "border-[color:var(--border-subtle)] hover:border-[color:var(--border-default)]",
                       )}
                       style={{
-                        background: isSelected ? "var(--brand-soft)" : "var(--bg-surface)",
+                        background: isSelected
+                          ? "color-mix(in srgb, var(--progress-fill) 12%, transparent)"
+                          : "var(--bg-surface)",
                       }}
                     >
                       <div className="flex items-center justify-between gap-3">

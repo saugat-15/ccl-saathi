@@ -56,7 +56,7 @@ export function ProcessingSteps({ activeStep = 2 }: ProcessingStepsProps) {
                 className="flex grow flex-col items-start gap-2"
                 asChild
               >
-                <StepperIndicator className="data-[state=inactive]:border-border data-[state=inactive]:text-muted-foreground data-[state=completed]:[background:var(--brand)] data-[state=completed]:[border-color:var(--brand)] data-[state=inactive]:bg-transparent size-8 border-2 data-[state=completed]:text-white">
+                <StepperIndicator className="data-[state=inactive]:border-border data-[state=inactive]:text-muted-foreground data-[state=completed]:[background:var(--progress-fill)] data-[state=completed]:[border-color:var(--progress-fill)] data-[state=inactive]:bg-transparent size-8 border-2 data-[state=completed]:text-white">
                   {step.icon}
                 </StepperIndicator>
                 <StepperTitle className="group-data-[state=inactive]/step:text-muted-foreground text-sm font-semibold">
@@ -79,7 +79,7 @@ export function ProcessingSteps({ activeStep = 2 }: ProcessingStepsProps) {
               </StepperTrigger>
 
               {index < STEPS.length - 1 && (
-                <StepperSeparator className="group-data-[state=completed]/step:[background:var(--brand)] absolute inset-x-0 start-9 top-4 m-0 group-data-[orientation=horizontal]/stepper-nav:w-[calc(100%-2rem)] group-data-[orientation=horizontal]/stepper-nav:flex-none" />
+                <StepperSeparator className="group-data-[state=completed]/step:[background:var(--progress-fill)] absolute inset-x-0 start-9 top-4 m-0 group-data-[orientation=horizontal]/stepper-nav:w-[calc(100%-2rem)] group-data-[orientation=horizontal]/stepper-nav:flex-none" />
               )}
             </StepperItem>
           );

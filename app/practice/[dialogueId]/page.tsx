@@ -189,7 +189,7 @@ function AudioPlayer({ audioUrl, isUnlocked }: { audioUrl: string, isUnlocked: b
         onClick={isPlaying ? handlePause : handlePlay}
         style={{
           width: 36, height: 36, borderRadius: "50%",
-          background: "var(--brand)", border: "none",
+          background: "var(--progress-fill)", border: "none",
           cursor: isAudioReady ? "pointer" : "not-allowed", flexShrink: 0,
           display: "flex", alignItems: "center", justifyContent: "center",
           boxShadow: "var(--shadow-brand)",
@@ -210,7 +210,7 @@ function AudioPlayer({ audioUrl, isUnlocked }: { audioUrl: string, isUnlocked: b
           className="audio-range"
           style={{
             width: "100%",
-            background: `linear-gradient(to right, var(--brand) 0%, var(--brand) ${pct}%, var(--border-subtle) ${pct}%, var(--border-subtle) 100%)`,
+            background: `linear-gradient(to right, var(--progress-fill) 0%, var(--progress-fill) ${pct}%, var(--border-subtle) ${pct}%, var(--border-subtle) 100%)`,
           }}
         />
         <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -442,7 +442,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
                   background: "var(--forest-50)", border: "1.5px solid var(--forest-200)",
                   display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16,
                 }}>
-                  <Trophy style={{ width: 24, height: 24, color: "var(--success)" }} />
+                  <Trophy style={{ width: 24, height: 24, color: "var(--score-high)" }} />
                 </div>
                 {latestScore != null ? (
                   <>
@@ -497,7 +497,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
           onClick={handleTryAgain}
           style={{
             width: "100%", padding: "12px 20px", borderRadius: 10,
-            background: "var(--brand)", border: "none", color: "#fff",
+            background: "var(--progress-fill)", border: "none", color: "#fff",
             fontFamily: "var(--font-sans)", fontSize: 14, fontWeight: 600,
             cursor: "pointer", boxShadow: "var(--shadow-brand)",
             display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
@@ -589,7 +589,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
               borderRadius: 10, padding: "10px 14px", marginBottom: 12,
               display: "flex", alignItems: "center", gap: 10,
             }}>
-              <Trophy style={{ width: 15, height: 15, color: "var(--success)", flexShrink: 0 }} />
+              <Trophy style={{ width: 15, height: 15, color: "var(--score-high)", flexShrink: 0 }} />
               <p style={{ fontSize: 13, color: "var(--fg-default)", margin: 0 }}>
                 Your last score was <strong>{Math.round(previousScore)}/100</strong> — try to beat it!
               </p>
@@ -640,13 +640,13 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
                   }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                       {isDone ? (
-                        <CheckCircle2 style={{ width: 13, height: 13, color: "var(--success)" }} />
+                        <CheckCircle2 style={{ width: 13, height: 13, color: "var(--score-high)" }} />
                       ) : !isUnlocked ? (
                         <Lock style={{ width: 13, height: 13, color: "var(--fg-muted)" }} />
                       ) : null}
                       <span style={{
                         fontSize: 11, letterSpacing: "0.07em", textTransform: "uppercase", fontWeight: 700,
-                        color: isDone ? "var(--brand)" : isUnlocked ? "var(--fg-strong)" : "var(--fg-muted)",
+                        color: isDone ? "var(--progress-fill)" : isUnlocked ? "var(--fg-strong)" : "var(--fg-muted)",
                       }}>
                         Segment {i + 1}
                         {transcript?.speaker && (
@@ -664,7 +664,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
                       )}
                       {isDone && (
                         <span style={{
-                          fontSize: 10, fontWeight: 700, color: "var(--brand)",
+                          fontSize: 10, fontWeight: 700, color: "var(--progress-fill)",
                           background: "var(--forest-50)", border: "1px solid var(--forest-200)",
                           padding: "2px 7px", borderRadius: 20,
                         }}>
@@ -732,7 +732,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
               disabled={isSubmitting || !allRecorded}
               style={{
                 padding: "11px 28px", borderRadius: 10,
-                background: allRecorded && !isSubmitting ? "var(--brand)" : "var(--bg-sunken)",
+                background: allRecorded && !isSubmitting ? "var(--progress-fill)" : "var(--bg-sunken)",
                 border: "none",
                 color: allRecorded && !isSubmitting ? "#fff" : "var(--fg-muted)",
                 fontFamily: "var(--font-sans)", fontSize: 14, fontWeight: 600,

@@ -107,10 +107,13 @@
     --danger: var(--red-500);
     --danger-soft: var(--red-50);
 
-    /* Score palette */
+    /* Score palette (raw colors — do not override in dark; keeps marks identical in both themes) */
     --score-low: var(--red-500);
     --score-mid: var(--amber-500);
     --score-high: var(--forest-500);
+
+    /* Progress bar fill — same as score-high; not tied to --brand (dark remaps brand) */
+    --progress-fill: var(--forest-500);
 
     /* ── Back-compat aliases (used in design-system components) ── */
     --indigo-50: var(--forest-50);

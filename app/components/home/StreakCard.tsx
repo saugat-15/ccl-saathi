@@ -50,7 +50,7 @@ export default function StreakCard({ userId }: Props) {
             title={date}
             style={{
               width: 8, height: 8, borderRadius: "50%",
-              background: loginSet.has(date) ? "var(--brand)" : "var(--border-default)",
+              background: loginSet.has(date) ? "var(--progress-fill)" : "var(--border-default)",
               opacity: loginSet.has(date) ? 1 : 0.5,
             }}
           />

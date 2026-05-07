@@ -180,7 +180,7 @@ export default function CategoryPracticeGrid() {
                   <span>Overall Progress</span>
                   <span style={{
                     fontFamily: "var(--font-mono)", fontWeight: 600,
-                    color: "var(--brand)"
+                    color: "var(--progress-fill)"
                   }}>
                     {totalDone} / {totalCount} completed
                   </span>
@@ -188,7 +188,7 @@ export default function CategoryPracticeGrid() {
                 <div style={{ height: 6, background: "var(--border-default)", borderRadius: 3, overflow: "hidden" }}>
                   <div style={{
                     height: "100%", borderRadius: 3,
-                    background: "var(--brand)",
+                    background: "var(--progress-fill)",
                     width: totalCount > 0 ? `${Math.min(100, (totalDone / totalCount) * 100)}%` : "0%",
                     transition: "width 0.4s ease",
                   }} />
@@ -287,13 +287,13 @@ export default function CategoryPracticeGrid() {
                         }}>
                           <div style={{
                             height: "100%", borderRadius: 2,
-                            background: done > 0 ? "var(--brand)" : "var(--border-default)",
+                            background: done > 0 ? "var(--progress-fill)" : "var(--border-default)",
                             width: `${pct}%`,
                             transition: "width 0.4s ease",
                           }} />
                         </div>
                         <p style={{
-                          fontSize: 11, color: done > 0 ? "var(--brand)" : "var(--fg-muted)",
+                          fontSize: 11, color: done > 0 ? "var(--progress-fill)" : "var(--fg-muted)",
                           fontFamily: "var(--font-mono)", fontWeight: done > 0 ? 600 : 400,
                           margin: 0,
                         }}>
