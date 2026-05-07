@@ -52,12 +52,12 @@ export default function CategoryPage({ params }: { params: { category: string } 
         console.log('userId', userId);
         const { items } = await list({ path: `dialogues/${category}/`, options: { listAll: true } });
 
+        const topLevel = items.filter((item) => item.path.split("/").length === 3 && item.path.split("/")[2]);
+        const jsonPaths = topLevel.filter((item) => item.path.endsWith(".json")).map((item) => item.path);
+
         const map = new Map<string, { audioPath?: string; transcriptPath?: string }>();
-        for (const item of items) {
-          const parts = item.path.split("/");
-          if (parts.length !== 3) continue;
-          const filename = parts[2];
-          if (!filename) continue;
+        for (const item of topLevel) {
+          const filename = item.path.split("/")[2];
           const dotIdx = filename.lastIndexOf(".");
           const ext = dotIdx >= 0 ? filename.slice(dotIdx + 1).toLowerCase() : "";
           const stem = dotIdx >= 0 ? filename.slice(0, dotIdx) : filename;
@@ -70,7 +70,12 @@ export default function CategoryPage({ params }: { params: { category: string } 
 
         const entries = Array.from(map.entries())
           .filter(([, e]) => e.audioPath)
-          .map(([basePath, e]) => ({ basePath, audioPath: e.audioPath!, transcriptPath: e.transcriptPath ?? null }));
+          .map(([basePath, e]) => ({
+            basePath,
+            audioPath: e.audioPath!,
+            // fall back to any JSON in the folder if no stem-matched JSON exists
+            transcriptPath: e.transcriptPath ?? jsonPaths[0] ?? null,
+          }));
 
         const enriched = await Promise.all(
           entries.map(async ({ basePath, audioPath, transcriptPath }) => {
@@ -191,7 +196,7 @@ export default function CategoryPage({ params }: { params: { category: string } 
         ) : dialogues.length === 0 ? (
           <p className="text-sm text-muted-foreground py-4">No dialogues found in this category.</p>
         ) : (
-          <ul className="grid sm:grid-cols-2 gap-3">
+          <ul className="flex flex-col gap-3">
             {dialogues.map((d, i) => (
               <li key={d.basePath}>
                 {/* DialogueCard — matches design spec */}

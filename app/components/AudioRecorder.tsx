@@ -197,9 +197,9 @@ export default function AudioRecorder({
               <span style={{ width: 15, height: 15, borderRadius: 3, background: "#fff" }} />
             ) : (
               <svg width="20" height="26" viewBox="0 0 22 28" fill="none" aria-hidden>
-                <rect x="5" y="0" width="12" height="18" rx="6" fill="#fff"/>
-                <path d="M1 13c0 5.523 4.477 10 10 10s10-4.477 10-10" stroke="#fff" strokeWidth="2" strokeLinecap="round" fill="none"/>
-                <line x1="11" y1="23" x2="11" y2="28" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
+                <rect x="5" y="0" width="12" height="18" rx="6" fill="#fff" />
+                <path d="M1 13c0 5.523 4.477 10 10 10s10-4.477 10-10" stroke="#fff" strokeWidth="2" strokeLinecap="round" fill="none" />
+                <line x1="11" y1="23" x2="11" y2="28" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
               </svg>
             )}
           </button>
@@ -261,10 +261,9 @@ export default function AudioRecorder({
               onClick={togglePlayback}
               style={{
                 width: 40, height: 40, borderRadius: "50%",
-                background: "var(--brand)", border: "none",
+                background: "var(--amber-400)", border: "none",
                 cursor: "pointer", flexShrink: 0,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                boxShadow: "var(--shadow-brand)",
                 transition: "background 0.15s",
               }}
             >
@@ -289,10 +288,10 @@ export default function AudioRecorder({
                 type="range" min={0} max={100} step={0.1}
                 value={seekPct} onChange={handleSeek}
                 disabled={playDuration <= 0}
-                className="audio-range"
+                className="audio-range audio-range--amber"
                 style={{
                   width: "100%",
-                  background: `linear-gradient(to right, var(--brand) 0%, var(--brand) ${seekPct}%, var(--border-subtle) ${seekPct}%, var(--border-subtle) 100%)`,
+                  background: `linear-gradient(to right, var(--amber-400) 0%, var(--amber-400) ${seekPct}%, var(--border-subtle) ${seekPct}%, var(--border-subtle) 100%)`,
                 }}
               />
               <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -329,7 +328,7 @@ export default function AudioRecorder({
               fontSize: 12, fontWeight: 600, color: "var(--success)",
             }}>
               <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden>
-                <path d="M2 6.5l3 3L11 3" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M2 6.5l3 3L11 3" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               Recording saved
             </span>

@@ -22,11 +22,13 @@
     "aws-amplify": "^6.6.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "lucide-react": "^1.8.0",
+    "lucide-react": "^1.14.0",
     "next": "14.2.10",
     "next-themes": "^0.4.6",
+    "radix-ui": "^1.4.3",
     "react": "^18",
     "react-dom": "^18",
+    "recharts": "^2.15.4",
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
