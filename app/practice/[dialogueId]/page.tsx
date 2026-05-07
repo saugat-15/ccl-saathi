@@ -129,11 +129,11 @@ type RecordingStatus = "UPLOADED" | "PROCESSING" | "SCORING" | "COMPLETED" | "FA
 
 function statusToStep(status: RecordingStatus): number {
   switch (status) {
-    case "UPLOADED":   return 2;
+    case "UPLOADED": return 2;
     case "PROCESSING": return 2;
-    case "SCORING":    return 3;
-    case "COMPLETED":  return 5; // past last step → all steps show as completed
-    case "FAILED":     return 2;
+    case "SCORING": return 3;
+    case "COMPLETED": return 5; // past last step → all steps show as completed
+    case "FAILED": return 2;
   }
 }
 
@@ -355,7 +355,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      // if (!allRecorded) throw new Error("Please record all segments before submitting.");
+      if (!allRecorded) throw new Error("Please record all segments before submitting.");
       const { userId } = await getCurrentUser();
 
       // ── Subscription / free-attempt gate ────────────────────────────────
@@ -729,7 +729,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <button
               onClick={() => handleSubmit(segmentStates)}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !allRecorded}
               style={{
                 padding: "11px 28px", borderRadius: 10,
                 background: allRecorded && !isSubmitting ? "var(--brand)" : "var(--bg-sunken)",
