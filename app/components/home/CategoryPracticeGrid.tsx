@@ -14,6 +14,10 @@ import { Separator } from "@/components/ui/separator";
 import { Loader2 } from "lucide-react";
 import { DEFAULT_CATEGORY_ORDER, getCategoryPresentation } from "@/lib/categoryPresentation";
 import type { Schema } from "@/amplify/data/resource";
+import ScoreChart from "@/app/components/home/ScoreChart";
+import StreakCard from "@/app/components/home/StreakCard";
+import GettingStartedBanner from "@/app/components/home/GettingStartedBanner";
+import { useScoreHistory } from "@/hooks/useScoreHistory";
 
 const client = generateClient<Schema>();
 
@@ -46,10 +50,17 @@ export default function CategoryPracticeGrid() {
       filter: { userId: { eq: userId }, status: { eq: "COMPLETED" } },
     }).subscribe({
       next: ({ items }) => {
-        const counts: Record<string, number> = {};
+        const uniqueByCategory: Record<string, Set<string>> = {};
         for (const rec of items) {
           const cat = rec.dialogueId?.split("/")?.[1];
-          if (cat) counts[cat] = (counts[cat] ?? 0) + 1;
+          if (cat && rec.dialogueId) {
+            if (!uniqueByCategory[cat]) uniqueByCategory[cat] = new Set();
+            uniqueByCategory[cat].add(rec.dialogueId);
+          }
+        }
+        const counts: Record<string, number> = {};
+        for (const [cat, dialogues] of Object.entries(uniqueByCategory)) {
+          counts[cat] = dialogues.size;
         }
         setCompletionsByCategory(counts);
       },
@@ -114,30 +125,48 @@ export default function CategoryPracticeGrid() {
     return () => { cancelled = true; };
   }, [authenticated]);
 
+  const { data: scoreData } = useScoreHistory(userId);
+
   // ── Authenticated dashboard ───────────────────────────────────────────────
   if (authenticated) {
-    const greeting = givenName ? `Welcome back, ${givenName}` : "Welcome back";
     const totalDone = categories.reduce((sum, c) => sum + (completionsByCategory[c.name] ?? 0), 0);
     const totalCount = categories.reduce((sum, c) => sum + c.count, 0);
+    const hasStarted = !isLoading && (totalDone > 0 || scoreData.length > 0);
+    const greeting = givenName ? `Welcome back, ${givenName}` : "Welcome back";
 
     return (
       <section className="scroll-mt-20" id="practice">
         <div className="max-w-5xl mx-auto px-5 py-10">
-          {/* Page header */}
-          <div style={{ marginBottom: 28 }}>
-            <h1 style={{
-              fontFamily: "var(--font-serif)", fontSize: 26, fontWeight: 600,
-              color: "var(--fg-strong)", margin: "0 0 6px", lineHeight: 1.2,
-            }}>
-              {greeting}
-            </h1>
-            <p style={{ fontSize: 14, color: "var(--fg-muted)", margin: 0 }}>
-              Pick a category below to start or continue your practice.
-            </p>
-          </div>
+          {/* Page header — only shown once user has started */}
+          {hasStarted && (
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 28 }}>
+              <div>
+                <h1 style={{
+                  fontFamily: "var(--font-serif)", fontSize: 26, fontWeight: 600,
+                  color: "var(--fg-strong)", margin: "0 0 6px", lineHeight: 1.2,
+                }}>
+                  {greeting}
+                </h1>
+                <p style={{ fontSize: 14, color: "var(--fg-muted)", margin: 0 }}>
+                  Pick a category below to continue your practice.
+                </p>
+              </div>
+              <div style={{ flexShrink: 0, marginTop: 4 }}>
+                <StreakCard userId={userId} />
+              </div>
+            </div>
+          )}
 
-          {/* Overall progress bar */}
-          {!isLoading && categories.length > 0 && (
+          {/* Getting started — shown until first completion */}
+          {!isLoading && !hasStarted && categories.length > 0 && (
+            <GettingStartedBanner
+              givenName={givenName}
+              firstCategorySlug={categories[0]?.name ?? null}
+            />
+          )}
+
+          {/* Overall progress bar — only when user has made attempts */}
+          {hasStarted && (
             <div style={{
               background: "var(--bg-surface)", border: "1px solid var(--border-subtle)",
               borderRadius: 12, padding: "14px 18px", marginBottom: 28,
@@ -156,10 +185,10 @@ export default function CategoryPracticeGrid() {
                     {totalDone} / {totalCount} completed
                   </span>
                 </div>
-                <div style={{ height: 6, background: "var(--border-subtle)", borderRadius: 3, overflow: "hidden" }}>
+                <div style={{ height: 6, background: "var(--border-default)", borderRadius: 3, overflow: "hidden" }}>
                   <div style={{
                     height: "100%", borderRadius: 3,
-                    background: "var(--success)",
+                    background: "var(--brand)",
                     width: totalCount > 0 ? `${Math.min(100, (totalDone / totalCount) * 100)}%` : "0%",
                     transition: "width 0.4s ease",
                   }} />
@@ -167,6 +196,8 @@ export default function CategoryPracticeGrid() {
               </div>
             </div>
           )}
+
+          <ScoreChart userId={userId} />
 
           <Separator style={{ marginBottom: 24 }} />
 
@@ -251,12 +282,12 @@ export default function CategoryPracticeGrid() {
                       {/* Progress bar */}
                       <div style={{ marginTop: "auto" }}>
                         <div style={{
-                          height: 4, background: "var(--border-subtle)",
+                          height: 4, background: "var(--border-default)",
                           borderRadius: 2, overflow: "hidden", marginBottom: 5,
                         }}>
                           <div style={{
                             height: "100%", borderRadius: 2,
-                            background: done > 0 ? "var(--success)" : "var(--border-default)",
+                            background: done > 0 ? "var(--brand)" : "var(--border-default)",
                             width: `${pct}%`,
                             transition: "width 0.4s ease",
                           }} />
@@ -352,7 +383,7 @@ export default function CategoryPracticeGrid() {
                     </div>
                     <div style={{ marginTop: "auto" }}>
                       <div style={{
-                        height: 4, background: "var(--border-subtle)",
+                        height: 4, background: "var(--border-default)",
                         borderRadius: 2, marginBottom: 5,
                       }} />
                       <p style={{

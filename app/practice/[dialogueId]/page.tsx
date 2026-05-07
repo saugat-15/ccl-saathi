@@ -11,9 +11,11 @@ import { uploadData, downloadData, getUrl, list } from "aws-amplify/storage";
 import { getCurrentUser, fetchAuthSession } from "aws-amplify/auth";
 import type { Schema } from "@/amplify/data/resource";
 import AudioRecorder from "@/app/components/AudioRecorder";
+import { ProcessingSteps } from "@/app/components/practice/ProcessingSteps";
+import { SegmentStepper } from "@/app/components/practice/SegmentStepper";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ChevronLeft, Play, Pause, Loader2, CheckCircle2, Lock, Zap, X } from "lucide-react";
+import { ChevronLeft, Play, Pause, Loader2, CheckCircle2, Lock, Zap, X, RotateCcw, Trophy } from "lucide-react";
 
 const client = generateClient<Schema>();
 
@@ -121,6 +123,18 @@ function fmt(secs: number) {
 
 function toLabel(s: string) {
   return s.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+type RecordingStatus = "UPLOADED" | "PROCESSING" | "SCORING" | "COMPLETED" | "FAILED";
+
+function statusToStep(status: RecordingStatus): number {
+  switch (status) {
+    case "UPLOADED":   return 2;
+    case "PROCESSING": return 2;
+    case "SCORING":    return 3;
+    case "COMPLETED":  return 5; // past last step → all steps show as completed
+    case "FAILED":     return 2;
+  }
 }
 
 // ── Audio player ─────────────────────────────────────────────────────────────
@@ -233,6 +247,11 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
   const [submitDone, setSubmitDone] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
+  const [recordingId, setRecordingId] = useState<string | null>(null);
+  const [processingStatus, setProcessingStatus] = useState<RecordingStatus>("UPLOADED");
+  const [latestScore, setLatestScore] = useState<number | null>(null);
+  const [previousScore, setPreviousScore] = useState<number | null>(null);
+
   useEffect(() => {
     async function load() {
       setIsLoading(true);
@@ -287,6 +306,30 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (!recordingId) return;
+
+    const sub = client.models.Recording.onUpdate({
+      filter: { id: { eq: recordingId } },
+    }).subscribe({
+      next: async (updated) => {
+        const status = (updated.status ?? "UPLOADED") as RecordingStatus;
+        setProcessingStatus(status);
+
+        if (status === "COMPLETED") {
+          const { data: feedbacks } = await client.models.Feedback.list({
+            filter: { recordingId: { eq: recordingId } },
+          });
+          const score = feedbacks?.[0]?.overallScore;
+          if (score != null) setLatestScore(score);
+        }
+      },
+      error: (err) => console.error("Recording subscription error:", err),
+    });
+
+    return () => sub.unsubscribe();
+  }, [recordingId]);
+
   function handleSegmentRecorded(index: number, blob: Blob, mimeType: string) {
     setSegmentStates((prev) => {
       const next = [...prev];
@@ -312,7 +355,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      if (!allRecorded) throw new Error("Please record all segments before submitting.");
+      // if (!allRecorded) throw new Error("Please record all segments before submitting.");
       const { userId } = await getCurrentUser();
 
       // ── Subscription / free-attempt gate ────────────────────────────────
@@ -354,6 +397,9 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
       // freeAttempts is incremented server-side by the transcriptUpdater Lambda
       // after successful processing — not here — to prevent client-side bypass.
 
+      setRecordingId(recording.id);
+      setProcessingStatus("UPLOADED");
+      setLatestScore(null);
       setSubmitDone(true);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "An unexpected error occurred.");
@@ -362,37 +408,111 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
     }
   }
 
+  function handleTryAgain() {
+    if (latestScore != null) setPreviousScore(latestScore);
+    setSegmentStates(transcriptSegments.map(() => ({ blob: null, mimeType: null, recordedUrl: null, recorded: false })));
+    setCurrentIndex(0);
+    setSubmitDone(false);
+    setSubmitError(null);
+    setRecordingId(null);
+    setProcessingStatus("UPLOADED");
+    setLatestScore(null);
+  }
+
+  const isScoreReady = processingStatus === "COMPLETED";
+  const isFailed = processingStatus === "FAILED";
+
   // ── Success screen ────────────────────────────────────────────────────────
   if (submitDone) return (
     <div className="min-h-screen bg-background flex items-center justify-center px-5">
-      <div style={{
-        background: "var(--bg-surface)", border: "1px solid var(--border-subtle)",
-        borderRadius: 18, padding: "40px 32px",
-        width: "100%", maxWidth: 400, textAlign: "center",
-        boxShadow: "var(--shadow-md)",
-      }}>
+      <div style={{ width: "100%", maxWidth: 440, display: "flex", flexDirection: "column", gap: 10 }}>
+
+        {/* Main card */}
         <div style={{
-          width: 56, height: 56, borderRadius: "50%",
-          background: "var(--forest-50)", border: "2px solid var(--forest-200)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          margin: "0 auto 16px",
+          background: "var(--bg-surface)", border: "1px solid var(--border-subtle)",
+          borderRadius: 18, padding: "32px 28px",
+          width: "100%", boxShadow: "var(--shadow-md)",
         }}>
-          <CheckCircle2 style={{ width: 28, height: 28, color: "var(--success)" }} />
+          {isScoreReady ? (
+            <>
+              {/* Score reveal */}
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 24 }}>
+                <div style={{
+                  width: 52, height: 52, borderRadius: 14,
+                  background: "var(--forest-50)", border: "1.5px solid var(--forest-200)",
+                  display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16,
+                }}>
+                  <Trophy style={{ width: 24, height: 24, color: "var(--success)" }} />
+                </div>
+                {latestScore != null ? (
+                  <>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 6 }}>
+                      <span style={{
+                        fontFamily: "var(--font-serif)", fontSize: 52, fontWeight: 700,
+                        color: "var(--fg-strong)", lineHeight: 1,
+                      }}>
+                        {Math.round(latestScore)}
+                      </span>
+                      <span style={{ fontSize: 20, color: "var(--fg-muted)", fontWeight: 500 }}>/100</span>
+                    </div>
+                    <p style={{ fontSize: 14, color: "var(--fg-muted)", margin: 0, textAlign: "center" }}>
+                      Try again to beat your score.
+                    </p>
+                  </>
+                ) : (
+                  <p style={{ fontSize: 15, fontWeight: 600, color: "var(--fg-strong)", margin: 0 }}>
+                    Score report ready!
+                  </p>
+                )}
+              </div>
+              <ProcessingSteps activeStep={5} />
+            </>
+          ) : isFailed ? (
+            <>
+              <h2 style={{
+                fontFamily: "var(--font-serif)", fontSize: 18, fontWeight: 600,
+                color: "var(--fg-strong)", margin: "0 0 8px", textAlign: "center",
+              }}>Processing failed</h2>
+              <p style={{ fontSize: 13, color: "var(--fg-muted)", margin: "0 0 24px", textAlign: "center" }}>
+                Something went wrong scoring your recording. You can try again.
+              </p>
+              <ProcessingSteps activeStep={2} />
+            </>
+          ) : (
+            <>
+              <h2 style={{
+                fontFamily: "var(--font-serif)", fontSize: 20, fontWeight: 600,
+                color: "var(--fg-strong)", margin: "0 0 4px", textAlign: "center",
+              }}>Recording submitted!</h2>
+              <p style={{ fontSize: 13, color: "var(--fg-muted)", margin: "0 0 28px", lineHeight: 1.5, textAlign: "center" }}>
+                Scoring usually takes 1–2 minutes.
+              </p>
+              <ProcessingSteps activeStep={statusToStep(processingStatus)} />
+            </>
+          )}
         </div>
-        <h2 style={{
-          fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600,
-          color: "var(--fg-strong)", margin: "0 0 8px"
-        }}>Submitted!</h2>
-        <p style={{ fontSize: 14, color: "var(--fg-muted)", margin: "0 0 24px", lineHeight: 1.5 }}>
-          We&apos;ll process your recordings shortly.
-        </p>
+
+        {/* CTAs */}
+        <button
+          onClick={handleTryAgain}
+          style={{
+            width: "100%", padding: "12px 20px", borderRadius: 10,
+            background: "var(--brand)", border: "none", color: "#fff",
+            fontFamily: "var(--font-sans)", fontSize: 14, fontWeight: 600,
+            cursor: "pointer", boxShadow: "var(--shadow-brand)",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          }}
+        >
+          <RotateCcw style={{ width: 15, height: 15 }} />
+          Try Again
+        </button>
         <button
           onClick={() => router.push(`/category/${category}`)}
           style={{
             width: "100%", padding: "11px 20px", borderRadius: 10,
-            background: "var(--brand)", border: "none", color: "#fff",
-            fontFamily: "var(--font-sans)", fontSize: 14, fontWeight: 600,
-            cursor: "pointer", boxShadow: "var(--shadow-brand)",
+            background: "none", border: "1px solid var(--border-subtle)", color: "var(--fg-muted)",
+            fontFamily: "var(--font-sans)", fontSize: 14, fontWeight: 500,
+            cursor: "pointer",
           }}
         >
           Back to {toLabel(category)}
@@ -433,233 +553,215 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
   const completedCount = segmentStates.filter((s) => s.recorded).length;
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-2xl mx-auto px-5 py-8">
-        <Button variant="ghost" size="sm" onClick={() => router.push(`/category/${category}`)} className="gap-1.5 -ml-2 mb-6 text-muted-foreground hover:text-foreground">
-          <ChevronLeft className="h-4 w-4" /> {toLabel(category)}
-        </Button>
+    <div className="bg-background" style={{ height: "calc(100vh - 3.5rem)", overflow: "hidden" }}>
+      <div className="max-w-5xl mx-auto px-5 h-full flex gap-10">
 
-        {/* Header */}
-        <div style={{ marginBottom: 16 }}>
-          <span style={{
-            fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase",
-            fontWeight: 700, color: "var(--amber-700)", background: "var(--amber-50)",
-            padding: "3px 8px", borderRadius: 4,
-          }}>
-            {toLabel(category)}
-          </span>
-          <h1 style={{
-            fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600,
-            color: "var(--fg-strong)", margin: "10px 0 4px", lineHeight: 1.2
-          }}>
-            Segment by segment
-          </h1>
-          <p style={{ fontSize: 14, color: "var(--fg-muted)", margin: 0 }}>
-            Listen and record your interpretation for each segment in order.
-          </p>
-        </div>
+        {/* ── Left: scrollable main content ─────────────────────────────── */}
+        <div className="flex-1 min-w-0 overflow-y-auto py-8">
+          <Button variant="ghost" size="sm" onClick={() => router.push(`/category/${category}`)} className="gap-1.5 -ml-2 mb-6 text-muted-foreground hover:text-foreground">
+            <ChevronLeft className="h-4 w-4" /> {toLabel(category)}
+          </Button>
 
-        {/* Scenario card */}
-        {scenario && (
-          <div style={{
-            background: "var(--bg-sunken)", border: "1px solid var(--border-subtle)",
-            borderRadius: 12, padding: "12px 16px", marginBottom: 16,
-            display: "flex", gap: 10, alignItems: "flex-start",
-          }}>
-            <span style={{ fontSize: 16, flexShrink: 0 }}>📋</span>
-            <p style={{ fontSize: 13, color: "var(--fg-default)", margin: 0, lineHeight: 1.55 }}>
-              {scenario}
+          {/* Header */}
+          <div style={{ marginBottom: 16 }}>
+            <span style={{
+              fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase",
+              fontWeight: 700, color: "var(--amber-700)", background: "var(--amber-50)",
+              padding: "3px 8px", borderRadius: 4,
+            }}>
+              {toLabel(category)}
+            </span>
+            <h1 style={{
+              fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 600,
+              color: "var(--fg-strong)", margin: "10px 0 4px", lineHeight: 1.2
+            }}>
+              Segment by segment
+            </h1>
+            <p style={{ fontSize: 14, color: "var(--fg-muted)", margin: 0 }}>
+              Listen and record your interpretation for each segment in order.
             </p>
           </div>
-        )}
 
-        {/* Progress bar */}
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ display: "flex", gap: 3, marginBottom: 6 }}>
-            {segmentStates.map((seg, i) => (
-              <div
-                key={i}
-                style={{
-                  height: 5, flex: 1, borderRadius: 3,
-                  background: seg.recorded
-                    ? "var(--success)"
-                    : i <= currentIndex
-                      ? "var(--forest-200)"
-                      : "var(--border-subtle)",
-                  transition: "background 0.2s",
-                }}
-              />
-            ))}
-          </div>
-          <p style={{ fontSize: 12, color: "var(--fg-muted)", fontFamily: "var(--font-mono)", margin: 0 }}>
-            {completedCount} of {segmentStates.length} segments recorded
-          </p>
-        </div>
+          {/* Previous score banner */}
+          {previousScore != null && (
+            <div style={{
+              background: "var(--forest-50)", border: "1px solid var(--forest-200)",
+              borderRadius: 10, padding: "10px 14px", marginBottom: 12,
+              display: "flex", alignItems: "center", gap: 10,
+            }}>
+              <Trophy style={{ width: 15, height: 15, color: "var(--success)", flexShrink: 0 }} />
+              <p style={{ fontSize: 13, color: "var(--fg-default)", margin: 0 }}>
+                Your last score was <strong>{Math.round(previousScore)}/100</strong> — try to beat it!
+              </p>
+            </div>
+          )}
 
-        <Separator style={{ marginBottom: 16 }} />
+          {/* Scenario card */}
+          {scenario && (
+            <div style={{
+              background: "var(--bg-sunken)", border: "1px solid var(--border-subtle)",
+              borderRadius: 12, padding: "12px 16px", marginBottom: 16,
+              display: "flex", gap: 10, alignItems: "flex-start",
+            }}>
+              <span style={{ fontSize: 16, flexShrink: 0 }}>📋</span>
+              <p style={{ fontSize: 13, color: "var(--fg-default)", margin: 0, lineHeight: 1.55 }}>
+                {scenario}
+              </p>
+            </div>
+          )}
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {segmentStates.map((seg, i) => {
-            const segAudioUrl = segmentAudioUrls[i];
-            const transcript = transcriptSegments[i];
-            const isUnlocked = i <= currentIndex;
-            const isDone = seg.recorded;
-            const fmtTime = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+          <Separator style={{ marginBottom: 16 }} />
 
-            return (
-              <div
-                key={i}
-                style={{
-                  background: "var(--bg-surface)",
-                  border: `1px solid ${isDone ? "var(--forest-200)" : "var(--border-subtle)"}`,
-                  borderRadius: 14, overflow: "hidden",
-                  opacity: isUnlocked ? 1 : 0.5,
-                  transition: "opacity 0.2s, border-color 0.2s",
-                }}
-              >
-                {/* Segment header */}
-                <div style={{
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  padding: "9px 16px",
-                  background: isDone ? "var(--forest-50)" : "var(--bg-sunken)",
-                  borderBottom: `1px solid ${isDone ? "var(--forest-100)" : "var(--border-subtle)"}`,
-                }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                    {isDone ? (
-                      <CheckCircle2 style={{ width: 13, height: 13, color: "var(--success)" }} />
-                    ) : !isUnlocked ? (
-                      <Lock style={{ width: 13, height: 13, color: "var(--fg-muted)" }} />
-                    ) : null}
-                    <span style={{
-                      fontSize: 11, letterSpacing: "0.07em", textTransform: "uppercase", fontWeight: 700,
-                      color: isDone ? "var(--brand)" : isUnlocked ? "var(--fg-strong)" : "var(--fg-muted)",
-                    }}>
-                      Segment {i + 1}
-                      {transcript?.speaker && (
-                        <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, marginLeft: 6, color: "var(--fg-muted)" }}>
-                          · {transcript.speaker}
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {segmentStates.map((seg, i) => {
+              const segAudioUrl = segmentAudioUrls[i];
+              const transcript = transcriptSegments[i];
+              const isUnlocked = i <= currentIndex;
+              const isDone = seg.recorded;
+              const fmtTime = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+
+              return (
+                <div
+                  key={i}
+                  style={{
+                    background: "var(--bg-surface)",
+                    border: `1px solid ${isDone ? "var(--forest-200)" : "var(--border-subtle)"}`,
+                    borderRadius: 14, overflow: "hidden",
+                    opacity: isUnlocked ? 1 : 0.5,
+                    transition: "opacity 0.2s, border-color 0.2s",
+                  }}
+                >
+                  {/* Segment header */}
+                  <div style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    padding: "9px 16px",
+                    background: isDone ? "var(--forest-50)" : "var(--bg-sunken)",
+                    borderBottom: `1px solid ${isDone ? "var(--forest-100)" : "var(--border-subtle)"}`,
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                      {isDone ? (
+                        <CheckCircle2 style={{ width: 13, height: 13, color: "var(--success)" }} />
+                      ) : !isUnlocked ? (
+                        <Lock style={{ width: 13, height: 13, color: "var(--fg-muted)" }} />
+                      ) : null}
+                      <span style={{
+                        fontSize: 11, letterSpacing: "0.07em", textTransform: "uppercase", fontWeight: 700,
+                        color: isDone ? "var(--brand)" : isUnlocked ? "var(--fg-strong)" : "var(--fg-muted)",
+                      }}>
+                        Segment {i + 1}
+                        {transcript?.speaker && (
+                          <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, marginLeft: 6, color: "var(--fg-muted)" }}>
+                            · {transcript.speaker}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      {transcript && (
+                        <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--fg-subtle)" }}>
+                          {fmtTime(transcript.startTime)}–{fmtTime(transcript.endTime)}
                         </span>
                       )}
-                    </span>
+                      {isDone && (
+                        <span style={{
+                          fontSize: 10, fontWeight: 700, color: "var(--brand)",
+                          background: "var(--forest-50)", border: "1px solid var(--forest-200)",
+                          padding: "2px 7px", borderRadius: 20,
+                        }}>
+                          Recorded
+                        </span>
+                      )}
+                      {!isUnlocked && !isDone && (
+                        <span style={{ fontSize: 11, color: "var(--fg-subtle)" }}>
+                          Locked
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    {transcript && (
-                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--fg-subtle)" }}>
-                        {fmtTime(transcript.startTime)}–{fmtTime(transcript.endTime)}
-                      </span>
+
+                  {/* Segment body */}
+                  <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
+
+                    {/* Audio player */}
+                    {segAudioUrl ? (
+                      <div>
+                        <p style={{
+                          fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase",
+                          fontWeight: 700, color: "var(--fg-muted)", margin: "0 0 7px"
+                        }}>Listen</p>
+                        <AudioPlayer audioUrl={segAudioUrl} isUnlocked={isUnlocked} />
+                      </div>
+                    ) : (
+                      <p style={{ fontSize: 13, color: "var(--fg-muted)", margin: 0 }}>Audio unavailable.</p>
                     )}
-                    {isDone && (
-                      <span style={{
-                        fontSize: 10, fontWeight: 700, color: "var(--brand)",
-                        background: "var(--forest-50)", border: "1px solid var(--forest-200)",
-                        padding: "2px 7px", borderRadius: 20,
-                      }}>
-                        Recorded
-                      </span>
-                    )}
-                    {!isUnlocked && !isDone && (
-                      <span style={{ fontSize: 11, color: "var(--fg-subtle)" }}>
-                        Locked
-                      </span>
-                    )}
+
+                    {/* Recorder */}
+                    <div style={{ pointerEvents: isUnlocked ? "auto" : "none" }}>
+                      {!isUnlocked && (
+                        <p style={{ fontSize: 12, color: "var(--fg-muted)", margin: "0 0 8px" }}>
+                          Complete segment {i} first to unlock this.
+                        </p>
+                      )}
+                      <AudioRecorder
+                        key={`recorder-${i}-${isUnlocked}`}
+                        onRecordingComplete={(blob, mimeType) => handleSegmentRecorded(i, blob, mimeType)}
+                        onReRecordStart={() => handleSegmentReRecord(i)}
+                        isDisabled={!isUnlocked || isSubmitting}
+                      />
+                    </div>
                   </div>
                 </div>
+              );
+            })}
+          </div>
 
-                {/* Segment body */}
-                <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
+          <Separator className="my-6" />
 
-                  {/* Transcript block — original only (no expected interpretation) */}
-                  {transcript?.original && (
-                    <div style={{
-                      background: "var(--bg-sunken)",
-                      border: "1px solid var(--border-subtle)",
-                      borderRadius: 10, padding: "12px 14px",
-                    }}>
-                      <p style={{
-                        fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase",
-                        fontWeight: 700, color: "var(--fg-subtle)", margin: "0 0 5px",
-                      }}>
-                        {transcript.speaker || "Speaker"}
-                      </p>
-                      <p style={{
-                        fontSize: 15, color: "var(--fg-strong)", margin: 0,
-                        lineHeight: 1.6,
-                        fontFamily: /[\u0900-\u097F]/.test(transcript.original) ? "var(--font-deva)" : "inherit",
-                      }}>
-                        {transcript.original}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Audio player */}
-                  {segAudioUrl ? (
-                    <div>
-                      <p style={{
-                        fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase",
-                        fontWeight: 700, color: "var(--fg-muted)", margin: "0 0 7px"
-                      }}>Listen</p>
-                      <AudioPlayer audioUrl={segAudioUrl} isUnlocked={isUnlocked} />
-                    </div>
-                  ) : (
-                    <p style={{ fontSize: 13, color: "var(--fg-muted)", margin: 0 }}>Audio unavailable.</p>
-                  )}
-
-                  {/* Recorder */}
-                  <div style={{ pointerEvents: isUnlocked ? "auto" : "none" }}>
-                    {!isUnlocked && (
-                      <p style={{ fontSize: 12, color: "var(--fg-muted)", margin: "0 0 8px" }}>
-                        Complete segment {i} first to unlock this.
-                      </p>
-                    )}
-                    <AudioRecorder
-                      key={`recorder-${i}-${isUnlocked}`}
-                      onRecordingComplete={(blob, mimeType) => handleSegmentRecorded(i, blob, mimeType)}
-                      onReRecordStart={() => handleSegmentReRecord(i)}
-                      isDisabled={!isUnlocked || isSubmitting}
-                    />
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <Separator className="my-6" />
-
-        {submitError && (
-          <p style={{
-            fontSize: 13, color: "var(--danger)", background: "var(--danger-soft)",
-            border: "1px solid rgba(220,38,38,0.2)", borderRadius: 8,
-            padding: "10px 14px", marginBottom: 16
-          }}>
-            {submitError}
-          </p>
-        )}
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <button
-            onClick={() => handleSubmit(segmentStates)}
-            disabled={isSubmitting || !allRecorded}
-            style={{
-              padding: "11px 28px", borderRadius: 10,
-              background: allRecorded && !isSubmitting ? "var(--brand)" : "var(--bg-sunken)",
-              border: "none",
-              color: allRecorded && !isSubmitting ? "#fff" : "var(--fg-muted)",
-              fontFamily: "var(--font-sans)", fontSize: 14, fontWeight: 600,
-              cursor: allRecorded && !isSubmitting ? "pointer" : "not-allowed",
-              boxShadow: allRecorded && !isSubmitting ? "var(--shadow-brand)" : "none",
-              transition: "all 0.15s",
-              display: "flex", alignItems: "center", gap: 8,
-            }}
-          >
-            {isSubmitting ? <><Loader2 className="h-4 w-4 animate-spin" />Submitting…</> : "Submit All Recordings"}
-          </button>
-          {!allRecorded && (
-            <span style={{ fontSize: 13, color: "var(--fg-muted)" }}>
-              Complete all {segmentStates.length} segments to submit.
-            </span>
+          {submitError && (
+            <p style={{
+              fontSize: 13, color: "var(--danger)", background: "var(--danger-soft)",
+              border: "1px solid rgba(220,38,38,0.2)", borderRadius: 8,
+              padding: "10px 14px", marginBottom: 16
+            }}>
+              {submitError}
+            </p>
           )}
-        </div>
-      </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <button
+              onClick={() => handleSubmit(segmentStates)}
+              disabled={isSubmitting}
+              style={{
+                padding: "11px 28px", borderRadius: 10,
+                background: allRecorded && !isSubmitting ? "var(--brand)" : "var(--bg-sunken)",
+                border: "none",
+                color: allRecorded && !isSubmitting ? "#fff" : "var(--fg-muted)",
+                fontFamily: "var(--font-sans)", fontSize: 14, fontWeight: 600,
+                cursor: allRecorded && !isSubmitting ? "pointer" : "not-allowed",
+                boxShadow: allRecorded && !isSubmitting ? "var(--shadow-brand)" : "none",
+                transition: "all 0.15s",
+                display: "flex", alignItems: "center", gap: 8,
+              }}
+            >
+              {isSubmitting ? <><Loader2 className="h-4 w-4 animate-spin" />Submitting…</> : "Submit All Recordings"}
+            </button>
+            {!allRecorded && (
+              <span style={{ fontSize: 13, color: "var(--fg-muted)" }}>
+                Complete all {segmentStates.length} segments to submit.
+              </span>
+            )}
+          </div>
+        </div>{/* end left column */}
+
+        {/* ── Right: fixed-height segment progress ────────────────────── */}
+        <aside className="hidden lg:flex w-52 shrink-0 flex-col overflow-y-auto py-8">
+          <SegmentStepper
+            segments={transcriptSegments.map((s) => ({ speaker: s.speaker }))}
+            recorded={segmentStates.map((s) => s.recorded)}
+            currentIndex={currentIndex}
+          />
+        </aside>
+
+      </div>{/* end max-w-5xl */}
 
       {/* ── Upgrade modal ───────────────────────────────────────────────── */}
       {showUpgradeModal && (

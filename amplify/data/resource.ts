@@ -2,6 +2,7 @@ import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 import { naatiProcessor } from '../functions/naatiProcessor/resource.js';
 import { transcriptUpdater } from '../functions/transcriptUpdater/resource.js';
 import { postConfirmation } from '../functions/postConfirmation/resource.js';
+import { postAuthentication } from '../functions/postAuthentication/resource.js';
 
 const schema = a.schema({
 
@@ -102,6 +103,21 @@ const schema = a.schema({
       allow.group('admin'),
     ]),
 
+  // ─── LOGIN STREAK ───────────────────────────────────────
+  // One record per user — written by the postAuthentication Lambda on every sign-in
+  LoginStreak: a.model({
+    userId: a.id().required(),
+    currentStreak: a.integer().default(0),
+    longestStreak: a.integer().default(0),
+    lastLoginDate: a.string(),          // YYYY-MM-DD (UTC)
+    isSuperUser: a.boolean().default(false),
+    loginDates: a.string().array(),     // last 30 login dates for the activity chart
+  })
+    .authorization(allow => [
+      allow.ownerDefinedIn('userId').to(['read']),
+      allow.group('admin'),
+    ]),
+
   // ─── FEEDBACK ───────────────────────────────────────────
   // Claude API scoring output — one per recording
   Feedback: a.model({
@@ -131,6 +147,7 @@ const schema = a.schema({
   allow.resource(naatiProcessor),
   allow.resource(transcriptUpdater),
   allow.resource(postConfirmation),
+  allow.resource(postAuthentication),
 ]);
 
 export type Schema = ClientSchema<typeof schema>;

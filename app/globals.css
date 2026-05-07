@@ -12,37 +12,37 @@
 @layer base {
   :root {
     /* shadcn semantic tokens — HSL */
-    --background:             0 0% 100%;
-    --foreground:             114 7% 20%;
+    --background: 0 0% 100%;
+    --foreground: 114 7% 20%;
 
-    --card:                   0 0% 100%;
-    --card-foreground:        114 7% 20%;
+    --card: 0 0% 100%;
+    --card-foreground: 114 7% 20%;
 
-    --popover:                0 0% 100%;
-    --popover-foreground:     114 7% 20%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 114 7% 20%;
 
-    --primary:                138 36% 36%;   /* forest-500 */
-    --primary-foreground:     0 0% 100%;
+    --primary: 138 36% 36%; /* forest-500 */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary:              108 5% 93%;
-    --secondary-foreground:   114 7% 20%;
+    --secondary: 108 5% 93%;
+    --secondary-foreground: 114 7% 20%;
 
-    --muted:                  120 3% 97%;
-    --muted-foreground:       113 5% 44%;
+    --muted: 120 3% 97%;
+    --muted-foreground: 113 5% 44%;
 
-    --accent:                 108 5% 93%;
-    --accent-foreground:      114 7% 20%;
+    --accent: 108 5% 93%;
+    --accent-foreground: 114 7% 20%;
 
-    --destructive:            0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: var(--color-red-800);
 
-    --border:                 108 6% 88%;
-    --input:                  108 6% 88%;
-    --ring:                   138 36% 36%;
-    --radius:                 0.75rem;
+    --border: 108 6% 88%;
+    --input: 108 6% 88%;
+    --ring: 138 36% 36%;
+    --radius: 0.75rem;
 
     /* ── CCLSaathi raw palette ── */
-    --forest-50:  #f1f7f2;
+    --forest-50: #f1f7f2;
     --forest-100: #dcebdf;
     --forest-200: #b8d6bd;
     --forest-300: #8cbb96;
@@ -53,7 +53,7 @@
     --forest-800: #1a3a26;
     --forest-900: #0f2417;
 
-    --gg-50:  #f6f8f6;
+    --gg-50: #f6f8f6;
     --gg-100: #eceeea;
     --gg-200: #dfe3dd;
     --gg-300: #c4cbc1;
@@ -64,56 +64,56 @@
     --gg-800: #1c201c;
     --gg-900: #0d0f0d;
 
-    --red-50:  #fef2f2;
+    --red-50: #fef2f2;
     --red-100: #fee2e2;
     --red-500: #dc2626;
     --red-600: #b91c1c;
 
-    --amber-50:  #fff8e6;
+    --amber-50: #fff8e6;
     --amber-100: #ffe9b3;
     --amber-400: #e8a93a;
     --amber-500: #b8821f;
     --amber-700: #6b4a10;
 
     /* Recording — bright red, ONLY for record button */
-    --rec:       #ef4444;
+    --rec: #ef4444;
     --rec-press: #dc2626;
 
     /* ── Semantic tokens ── */
-    --bg-page:    #ffffff;
+    --bg-page: #ffffff;
     --bg-surface: #ffffff;
-    --bg-sunken:  var(--gg-50);
-    --bg-raised:  #ffffff;
+    --bg-sunken: var(--gg-50);
+    --bg-raised: #ffffff;
 
-    --brand:       var(--forest-500);
+    --brand: var(--forest-500);
     --brand-hover: var(--forest-600);
     --brand-press: var(--forest-700);
-    --brand-soft:  var(--forest-50);
+    --brand-soft: var(--forest-50);
 
-    --fg-default:  var(--gg-700);
-    --fg-strong:   var(--gg-800);
-    --fg-muted:    var(--gg-500);
-    --fg-subtle:   var(--gg-400);
+    --fg-default: var(--gg-700);
+    --fg-strong: var(--gg-800);
+    --fg-muted: var(--gg-500);
+    --fg-subtle: var(--gg-400);
     --fg-on-brand: #ffffff;
 
-    --border-subtle:  var(--gg-200);
+    --border-subtle: var(--gg-200);
     --border-default: var(--gg-300);
-    --border-focus:   var(--forest-500);
+    --border-focus: var(--forest-500);
 
-    --success:      var(--forest-500);
+    --success: var(--color-emerald-500);
     --success-soft: var(--forest-50);
-    --warning:      var(--amber-500);
+    --warning: var(--color-yellow-500);
     --warning-soft: var(--amber-50);
-    --danger:       var(--red-500);
-    --danger-soft:  var(--red-50);
+    --danger: var(--red-500);
+    --danger-soft: var(--red-50);
 
     /* Score palette */
-    --score-low:  var(--red-500);
-    --score-mid:  var(--amber-500);
+    --score-low: var(--red-500);
+    --score-mid: var(--amber-500);
     --score-high: var(--forest-500);
 
     /* ── Back-compat aliases (used in design-system components) ── */
-    --indigo-50:  var(--forest-50);
+    --indigo-50: var(--forest-50);
     --indigo-100: var(--forest-100);
     --indigo-200: var(--forest-200);
     --indigo-300: var(--forest-300);
@@ -122,13 +122,13 @@
     --indigo-600: var(--forest-600);
     --indigo-700: var(--forest-700);
 
-    --teal-50:  var(--forest-50);
+    --teal-50: var(--forest-50);
     --teal-100: var(--forest-100);
     --teal-500: var(--forest-500);
     --teal-600: var(--forest-600);
     --teal-700: var(--forest-700);
 
-    --marigold-50:  var(--amber-50);
+    --marigold-50: var(--amber-50);
     --marigold-100: var(--amber-100);
     --marigold-400: var(--amber-400);
     --marigold-500: var(--amber-500);
@@ -136,13 +136,13 @@
     --marigold-700: var(--amber-700);
     --marigold-300: #eabb5a;
 
-    --crimson-50:  var(--red-50);
+    --crimson-50: var(--red-50);
     --crimson-100: var(--red-100);
     --crimson-500: var(--red-500);
     --crimson-600: var(--red-600);
     --crimson-700: #7f1d1d;
 
-    --ink-50:  #ffffff;
+    --ink-50: #ffffff;
     --ink-100: var(--gg-100);
     --ink-200: var(--gg-200);
     --ink-300: var(--gg-300);
@@ -153,21 +153,47 @@
     --ink-800: var(--gg-800);
 
     /* ── Typography ── */
-    --font-sans:  "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
     --font-serif: "Source Serif 4", ui-serif, Georgia, Cambria, serif;
-    --font-deva:  "Noto Sans Devanagari", "Mangal", sans-serif;
-    --font-mono:  "JetBrains Mono", ui-monospace, Menlo, monospace;
+    --font-deva: "Noto Sans Devanagari", "Mangal", sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
 
     /* ── Shadows (forest-tinted) ── */
-    --shadow-xs:    0 1px 2px rgba(15,36,23,.06);
-    --shadow-sm:    0 2px 4px rgba(15,36,23,.06), 0 1px 2px rgba(15,36,23,.04);
-    --shadow-md:    0 6px 14px rgba(15,36,23,.08), 0 2px 4px rgba(15,36,23,.04);
-    --shadow-lg:    0 16px 32px rgba(15,36,23,.12), 0 4px 8px rgba(15,36,23,.06);
+    --shadow-xs: 0 1px 2px rgba(15, 36, 23, 0.06);
+    --shadow-sm:
+      0 2px 4px rgba(15, 36, 23, 0.06), 0 1px 2px rgba(15, 36, 23, 0.04);
+    --shadow-md:
+      0 6px 14px rgba(15, 36, 23, 0.08), 0 2px 4px rgba(15, 36, 23, 0.04);
+    --shadow-lg:
+      0 16px 32px rgba(15, 36, 23, 0.12), 0 4px 8px rgba(15, 36, 23, 0.06);
     --shadow-brand: none;
-    --shadow-rec:   0 8px 24px rgba(239,68,68,.35);
-    --shadow-focus: 0 0 0 3px rgba(58,125,78,.25);
+    --shadow-rec: 0 8px 24px rgba(239, 68, 68, 0.35);
+    --shadow-focus: 0 0 0 3px rgba(58, 125, 78, 0.25);
 
-    --ease-out: cubic-bezier(0.22,1,0.36,1);
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+    --success-foreground: var(--color-emerald-900);
+
+    --info: var(--color-violet-500);
+
+    --info-foreground: var(--color-violet-900);
+
+    --warning-foreground: var(--color-yellow-900);
+
+    --invert: var(--color-zinc-900);
+
+    --invert-foreground: var(--color-zinc-50);
+  }
+  .dark {
+    --destructive-foreground: var(--color-red-600);
+    --success: var(--color-emerald-500);
+    --success-foreground: var(--color-emerald-600);
+    --info: var(--color-violet-500);
+    --info-foreground: var(--color-violet-600);
+    --warning: var(--color-yellow-500);
+    --warning-foreground: var(--color-yellow-600);
+    --invert: var(--color-zinc-700);
+    --invert-foreground: var(--color-zinc-50);
   }
 }
 
@@ -176,68 +202,68 @@
    Raw palette scales stay constant in both modes.                          */
 [data-theme="dark"] {
   /* shadcn HSL tokens — dark */
-  --background:             148 22% 8%;
-  --foreground:             113 8% 86%;
-  --card:                   148 18% 10%;
-  --card-foreground:        113 8% 86%;
-  --popover:                148 18% 10%;
-  --popover-foreground:     113 8% 86%;
-  --primary:                138 25% 49%;   /* forest-400 — lighter for dark bg contrast */
-  --primary-foreground:     0 0% 100%;
-  --secondary:              148 14% 13%;
-  --secondary-foreground:   113 8% 86%;
-  --muted:                  148 14% 12%;
-  --muted-foreground:       113 7% 62%;
-  --accent:                 148 14% 15%;
-  --accent-foreground:      113 8% 86%;
-  --destructive:            0 70% 70%;
+  --background: 148 22% 8%;
+  --foreground: 113 8% 86%;
+  --card: 148 18% 10%;
+  --card-foreground: 113 8% 86%;
+  --popover: 148 18% 10%;
+  --popover-foreground: 113 8% 86%;
+  --primary: 138 25% 49%; /* forest-400 — lighter for dark bg contrast */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 148 14% 13%;
+  --secondary-foreground: 113 8% 86%;
+  --muted: 148 14% 12%;
+  --muted-foreground: 113 7% 62%;
+  --accent: 148 14% 15%;
+  --accent-foreground: 113 8% 86%;
+  --destructive: 0 70% 70%;
   --destructive-foreground: 0 0% 100%;
-  --border:                 150 14% 16%;
-  --input:                  150 14% 16%;
-  --ring:                   138 25% 49%;
+  --border: 150 14% 16%;
+  --input: 150 14% 16%;
+  --ring: 138 25% 49%;
 
   /* CCLSaathi semantic tokens — dark */
-  --bg-page:    #0e1512;
+  --bg-page: #0e1512;
   --bg-surface: #141c17;
-  --bg-sunken:  #0a100d;
-  --bg-raised:  #1a221d;
+  --bg-sunken: #0a100d;
+  --bg-raised: #1a221d;
 
-  --brand:       var(--forest-400);
+  --brand: var(--forest-400);
   --brand-hover: var(--forest-300);
   --brand-press: var(--forest-200);
-  --brand-soft:  rgba(94,156,109,.14);
+  --brand-soft: rgba(94, 156, 109, 0.14);
 
-  --fg-default:  #d8dfd6;
-  --fg-strong:   #f1f4ef;
-  --fg-muted:    #9aa498;
-  --fg-subtle:   #6d7a6c;
+  --fg-default: #d8dfd6;
+  --fg-strong: #f1f4ef;
+  --fg-muted: #9aa498;
+  --fg-subtle: #6d7a6c;
   --fg-on-brand: #0e1512;
 
-  --border-subtle:  #253028;
+  --border-subtle: #253028;
   --border-default: #33413a;
-  --border-focus:   var(--forest-400);
+  --border-focus: var(--forest-400);
 
-  --success:      var(--forest-400);
-  --success-soft: rgba(94,156,109,.14);
-  --warning-soft: rgba(232,169,58,.14);
-  --danger:       #f87171;
-  --danger-soft:  rgba(239,68,68,.14);
+  --success: var(--forest-400);
+  --success-soft: rgba(94, 156, 109, 0.14);
+  --warning-soft: rgba(232, 169, 58, 0.14);
+  --danger: #f87171;
+  --danger-soft: rgba(239, 68, 68, 0.14);
 
   /* Record stays exact bright red in dark mode */
-  --rec:       #ef4444;
+  --rec: #ef4444;
   --rec-press: #dc2626;
 
   /* Shadows become near-black in dark mode */
-  --shadow-xs:    0 1px 2px rgba(0,0,0,.4);
-  --shadow-sm:    0 2px 4px rgba(0,0,0,.4), 0 1px 2px rgba(0,0,0,.3);
-  --shadow-md:    0 6px 14px rgba(0,0,0,.45), 0 2px 4px rgba(0,0,0,.3);
-  --shadow-lg:    0 16px 32px rgba(0,0,0,.55), 0 4px 8px rgba(0,0,0,.3);
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 6px 14px rgba(0, 0, 0, 0.45), 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 16px 32px rgba(0, 0, 0, 0.55), 0 4px 8px rgba(0, 0, 0, 0.3);
   --shadow-brand: none;
-  --shadow-rec:   0 8px 24px rgba(239,68,68,.45);
-  --shadow-focus: 0 0 0 3px rgba(94,156,109,.35);
+  --shadow-rec: 0 8px 24px rgba(239, 68, 68, 0.45);
+  --shadow-focus: 0 0 0 3px rgba(94, 156, 109, 0.35);
 
   /* Back-compat aliases flipped for dark surfaces */
-  --ink-50:  var(--bg-page);
+  --ink-50: var(--bg-page);
   --ink-100: var(--bg-sunken);
   --ink-200: var(--border-subtle);
   --ink-300: var(--border-default);
@@ -247,40 +273,50 @@
   --ink-700: var(--fg-default);
   --ink-800: var(--fg-strong);
 
-  --indigo-50:    rgba(94,156,109,.10);
-  --indigo-100:   rgba(94,156,109,.18);
-  --indigo-300:   var(--forest-400);
-  --indigo-500:   var(--forest-400);
-  --teal-50:      rgba(94,156,109,.10);
-  --teal-100:     rgba(94,156,109,.18);
-  --teal-500:     var(--forest-400);
-  --teal-600:     var(--forest-300);
-  --marigold-50:  rgba(232,169,58,.10);
-  --marigold-100: rgba(232,169,58,.18);
+  --indigo-50: rgba(94, 156, 109, 0.1);
+  --indigo-100: rgba(94, 156, 109, 0.18);
+  --indigo-300: var(--forest-400);
+  --indigo-500: var(--forest-400);
+  --teal-50: rgba(94, 156, 109, 0.1);
+  --teal-100: rgba(94, 156, 109, 0.18);
+  --teal-500: var(--forest-400);
+  --teal-600: var(--forest-300);
+  --marigold-50: rgba(232, 169, 58, 0.1);
+  --marigold-100: rgba(232, 169, 58, 0.18);
   --marigold-600: var(--amber-400);
   --marigold-700: var(--amber-400);
-  --crimson-50:   rgba(239,68,68,.10);
-  --crimson-100:  rgba(239,68,68,.18);
-  --crimson-500:  #f87171;
-  --crimson-600:  #f87171;
-  --crimson-700:  #fca5a5;
+  --crimson-50: rgba(239, 68, 68, 0.1);
+  --crimson-100: rgba(239, 68, 68, 0.18);
+  --crimson-500: #f87171;
+  --crimson-600: #f87171;
+  --crimson-700: #fca5a5;
 
-  --indigo-600:   var(--forest-400);   /* #5e9c6d — readable on dark bg */
-  --indigo-700:   var(--forest-300);   /* #8cbb96 */
+  --indigo-600: var(--forest-400); /* #5e9c6d — readable on dark bg */
+  --indigo-700: var(--forest-300); /* #8cbb96 */
 
   color-scheme: dark;
 }
 
 [data-theme="dark"] ::selection {
-  background: rgba(94,156,109,.35);
+  background: rgba(94, 156, 109, 0.35);
   color: var(--fg-strong);
 }
 
 /* ── Base styles ────────────────────────────────────────────────────────── */
 @layer base {
-  *, *::before, *::after { box-sizing: border-box; padding: 0; margin: 0; }
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+  }
 
-  html, body { max-width: 100vw; overflow-x: hidden; }
+  html,
+  body {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
 
   body {
     font-family: var(--font-sans);
@@ -290,36 +326,72 @@
     line-height: 1.45;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    transition: background 0.2s, color 0.2s;
+    transition:
+      background 0.2s,
+      color 0.2s;
   }
 
-  h1, h2 {
+  h1,
+  h2 {
     font-family: var(--font-serif);
     color: var(--fg-strong);
     line-height: 1.12;
     letter-spacing: -0.02em;
   }
-  h3, h4 { color: var(--fg-strong); line-height: 1.25; }
+  h3,
+  h4 {
+    color: var(--fg-strong);
+    line-height: 1.25;
+  }
 
-  a { color: var(--brand); text-decoration: none; text-underline-offset: 3px; }
-  a:hover { text-decoration: underline; color: var(--brand-hover); }
+  a {
+    color: var(--brand);
+    text-decoration: none;
+    text-underline-offset: 3px;
+  }
+  a:hover {
+    text-decoration: underline;
+    color: var(--brand-hover);
+  }
 
-  ::selection { background: var(--forest-100); color: var(--gg-800); }
+  ::selection {
+    background: var(--forest-100);
+    color: var(--gg-800);
+  }
 }
 
 /* ── Keyframes ──────────────────────────────────────────────────────────── */
 @keyframes pulse-rec {
-  0%   { transform: scale(1);    opacity: 0.5; }
-  70%  { transform: scale(1.55); opacity: 0; }
-  100% { transform: scale(1.55); opacity: 0; }
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  70% {
+    transform: scale(1.55);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.55);
+    opacity: 0;
+  }
 }
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(4px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ── Audio range ────────────────────────────────────────────────────────── */
@@ -335,60 +407,105 @@
 }
 .audio-range::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 13px; height: 13px;
+  width: 13px;
+  height: 13px;
   border-radius: 50%;
   background: var(--brand);
   cursor: pointer;
   transition: transform 0.1s;
 }
-.audio-range:hover::-webkit-slider-thumb { transform: scale(1.25); }
-.audio-range::-moz-range-thumb {
-  width: 13px; height: 13px; border: none;
-  border-radius: 50%; background: var(--brand); cursor: pointer;
+.audio-range:hover::-webkit-slider-thumb {
+  transform: scale(1.25);
 }
-.audio-range::-moz-range-track { background: var(--border-subtle); height: 3px; border-radius: 2px; }
+.audio-range::-moz-range-thumb {
+  width: 13px;
+  height: 13px;
+  border: none;
+  border-radius: 50%;
+  background: var(--brand);
+  cursor: pointer;
+}
+.audio-range::-moz-range-track {
+  background: var(--border-subtle);
+  height: 3px;
+  border-radius: 2px;
+}
+
+.audio-range--amber::-webkit-slider-thumb {
+  background: var(--amber-400);
+}
+.audio-range--amber:hover::-webkit-slider-thumb {
+  transform: scale(1.25);
+}
+.audio-range--amber::-moz-range-thumb {
+  background: var(--amber-400);
+}
 
 /* ── Amplify Authenticator theming ──────────────────────────────────────── */
 [data-amplify-authenticator] {
-  --amplify-colors-background-primary:    var(--bg-page);
-  --amplify-colors-background-secondary:  var(--bg-sunken);
-  --amplify-colors-brand-primary-10:  var(--forest-50);
-  --amplify-colors-brand-primary-20:  var(--forest-100);
-  --amplify-colors-brand-primary-40:  var(--forest-200);
-  --amplify-colors-brand-primary-60:  var(--forest-400);
-  --amplify-colors-brand-primary-80:  var(--forest-500);
-  --amplify-colors-brand-primary-90:  var(--forest-600);
+  --amplify-colors-background-primary: var(--bg-page);
+  --amplify-colors-background-secondary: var(--bg-sunken);
+  --amplify-colors-brand-primary-10: var(--forest-50);
+  --amplify-colors-brand-primary-20: var(--forest-100);
+  --amplify-colors-brand-primary-40: var(--forest-200);
+  --amplify-colors-brand-primary-60: var(--forest-400);
+  --amplify-colors-brand-primary-80: var(--forest-500);
+  --amplify-colors-brand-primary-90: var(--forest-600);
   --amplify-colors-brand-primary-100: var(--forest-700);
-  --amplify-colors-border-primary:    var(--border-subtle);
-  --amplify-colors-font-primary:      var(--fg-strong);
-  --amplify-colors-font-secondary:    var(--fg-muted);
-  --amplify-radii-small:  0.5rem;
+  --amplify-colors-border-primary: var(--border-subtle);
+  --amplify-colors-font-primary: var(--fg-strong);
+  --amplify-colors-font-secondary: var(--fg-muted);
+  --amplify-radii-small: 0.5rem;
   --amplify-radii-medium: 0.75rem;
-  --amplify-radii-large:  0.75rem;
+  --amplify-radii-large: 0.75rem;
 }
 
 /* ── Utilities ──────────────────────────────────────────────────────────── */
-.fade-in   { animation: fade-in 0.2s ease both; }
-.font-serif { font-family: var(--font-serif) !important; }
-.font-deva  { font-family: var(--font-deva) !important; }
-.font-mono  { font-family: var(--font-mono) !important; }
+.fade-in {
+  animation: fade-in 0.2s ease both;
+}
+.font-serif {
+  font-family: var(--font-serif) !important;
+}
+.font-deva {
+  font-family: var(--font-deva) !important;
+}
+.font-mono {
+  font-family: var(--font-mono) !important;
+}
 
 /* Devanagari text always gets extra leading */
-.font-deva, [lang="ne"] { line-height: 1.7; }
+.font-deva,
+[lang="ne"] {
+  line-height: 1.7;
+}
 
 /* Reduce motion */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { transition-duration: 0ms !important; animation-duration: 0ms !important; }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
 }
 
 /* ── Mobile: practice page & recorder ──────────────────────────────────── */
 @media (max-width: 480px) {
   /* Tighten page padding on small screens */
-  .practice-page { padding-inline: 14px; }
+  .practice-page {
+    padding-inline: 14px;
+  }
 
   /* Waveform bars: reduce count via smaller width */
-  .recorder-wave span { width: 2px; gap: 2px; }
+  .recorder-wave span {
+    width: 2px;
+    gap: 2px;
+  }
 
   /* Prevent timer text from pushing waveform off-screen */
-  .recorder-timer { min-width: 38px !important; font-size: 13px !important; }
+  .recorder-timer {
+    min-width: 38px !important;
+    font-size: 13px !important;
+  }
 }
