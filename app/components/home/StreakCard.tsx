@@ -1,6 +1,7 @@
 "use client";
 
 import { useStreak } from "@/hooks/useStreak";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Props = {
   userId: string | null;
@@ -18,7 +19,31 @@ function lastNDays(days: number): string[] {
 export default function StreakCard({ userId }: Props) {
   const { data, isLoading } = useStreak(userId);
 
-  if (isLoading || !data) return null;
+  if (!userId) return null;
+
+  if (isLoading) {
+    return (
+      <div style={{
+        background: "var(--bg-surface)",
+        border: "1px solid var(--border-subtle)",
+        borderRadius: 10,
+        padding: "10px 16px",
+        display: "flex",
+        alignItems: "center",
+        gap: 14,
+      }}>
+        <Skeleton className="h-4 w-28 shrink-0" />
+        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+          {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+            <Skeleton key={i} className="h-2 w-2 rounded-full shrink-0" />
+          ))}
+        </div>
+        <Skeleton className="h-4 w-14 shrink-0 ml-auto" />
+      </div>
+    );
+  }
+
+  if (!data) return null;
 
   const { currentStreak, longestStreak, isSuperUser, loginDates } = data;
   const loginSet = new Set(loginDates);
@@ -50,7 +75,7 @@ export default function StreakCard({ userId }: Props) {
             title={date}
             style={{
               width: 8, height: 8, borderRadius: "50%",
-              background: loginSet.has(date) ? "var(--brand)" : "var(--border-default)",
+              background: loginSet.has(date) ? "var(--progress-fill)" : "var(--border-default)",
               opacity: loginSet.has(date) ? 1 : 0.5,
             }}
           />

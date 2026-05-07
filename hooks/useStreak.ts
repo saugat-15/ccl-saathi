@@ -25,6 +25,7 @@ export function useStreak(userId: string | null): UseStreakResult {
   useEffect(() => {
     if (!userId) {
       setData(null);
+      setIsLoading(false);
       return;
     }
 
