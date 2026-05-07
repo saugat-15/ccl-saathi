@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-
-const SCRIPT_URL = process.env.NEXT_PUBLIC_WAITLIST_SCRIPT_URL ?? "";
+import { submitWaitlist } from "@/lib/waitlist";
 
 export default function WaitlistForm() {
   const [name, setName] = useState("");
@@ -19,18 +18,9 @@ export default function WaitlistForm() {
     if (!trimmedEmail || isSubmitting) return;
     setIsSubmitting(true);
     try {
-      if (SCRIPT_URL) {
-        // no-cors response is opaque (empty body) — don't try to read it
-        await fetch(SCRIPT_URL, {
-          method: "POST",
-          body: JSON.stringify({ name: trimmedName, email: trimmedEmail }),
-          mode: "no-cors",
-          headers: { "Content-Type": "text/plain" },
-        });
-      }
+      await submitWaitlist({ name: trimmedName, email: trimmedEmail, source: "home" });
     } catch (error) {
-      // fire-and-forget — don't block the user on network errors
-      console.error('Error submitting waitlist form', error);
+      console.error("Error submitting waitlist form", error);
     } finally {
       setIsSubmitting(false);
     }

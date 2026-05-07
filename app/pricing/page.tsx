@@ -5,10 +5,112 @@ import { useRouter } from "next/navigation";
 import { useAuthenticator } from "@aws-amplify/ui-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Check, ChevronLeft, Zap, X } from "lucide-react";
+import { Check, ChevronLeft, Zap, X, Loader2 } from "lucide-react";
+import { submitWaitlist } from "@/lib/waitlist";
 
 // Hardcoded until billing backend is ready
 const IS_PRO = false;
+
+function WaitlistForm() {
+  const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setStatus("loading");
+    const fd = new FormData(e.currentTarget);
+    const name = (fd.get("name") as string).trim();
+    const email = (fd.get("email") as string).trim();
+    try {
+      await submitWaitlist({ name, email, source: "pricing" });
+      setStatus("done");
+    } catch {
+      setStatus("error");
+    }
+  }
+
+  return (
+    <div
+      id="waitlist"
+      style={{ borderRadius: 16, padding: "28px 28px", textAlign: "center" }}
+    >
+      <h2 style={{
+        fontFamily: "var(--font-serif)", fontSize: 20, fontWeight: 600,
+        color: "var(--fg-strong)", margin: "0 0 8px",
+      }}>
+        Get notified when Pro launches
+      </h2>
+      <p style={{ fontSize: 14, color: "var(--fg-muted)", margin: "0 0 20px" }}>
+        Early subscribers get launch pricing locked in for life.
+      </p>
+
+      {status === "done" ? (
+        <p style={{
+          fontSize: 14, fontWeight: 600, color: "var(--success)",
+          background: "var(--forest-50)", border: "1px solid var(--forest-200)",
+          borderRadius: 8, padding: "12px 20px", display: "inline-block",
+        }}>
+          ✓ You&apos;re on the list! We&apos;ll be in touch.
+        </p>
+      ) : (
+        <form
+          onSubmit={handleSubmit}
+          style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 440, margin: "0 auto" }}
+        >
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <input
+              type="text" name="name" required
+              placeholder="Your name"
+              style={{
+                flex: 1, minWidth: 140, height: 42, borderRadius: 8,
+                border: "1px solid var(--border-default)", padding: "0 12px",
+                fontSize: 14, fontFamily: "var(--font-sans)",
+                outline: "none", background: "var(--bg-surface)",
+              }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "var(--brand)")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border-default)")}
+            />
+            <input
+              type="email" name="email" required
+              placeholder="you@example.com"
+              style={{
+                flex: 2, minWidth: 180, height: 42, borderRadius: 8,
+                border: "1px solid var(--border-default)", padding: "0 12px",
+                fontSize: 14, fontFamily: "var(--font-sans)",
+                outline: "none", background: "var(--bg-surface)",
+              }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "var(--brand)")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border-default)")}
+            />
+          </div>
+          {status === "error" && (
+            <p style={{ fontSize: 12, color: "var(--danger)", margin: 0 }}>
+              Something went wrong — please try again.
+            </p>
+          )}
+          <button
+            type="submit"
+            disabled={status === "loading"}
+            style={{
+              height: 42, borderRadius: 8,
+              background: status === "loading" ? "var(--border-default)" : "var(--brand)",
+              border: "none", color: "#fff", fontFamily: "var(--font-sans)",
+              fontSize: 14, fontWeight: 600,
+              cursor: status === "loading" ? "not-allowed" : "pointer",
+              boxShadow: status === "loading" ? "none" : "var(--shadow-brand)",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              transition: "background 0.15s",
+            }}
+          >
+            {status === "loading"
+              ? <><Loader2 style={{ width: 15, height: 15 }} className="animate-spin" /> Joining…</>
+              : "Join Waitlist"
+            }
+          </button>
+        </form>
+      )}
+    </div>
+  );
+}
 
 const FREE_FEATURES = [
   "2 free practice dialogues",
@@ -392,65 +494,7 @@ export default function PricingPage() {
         </div>
 
         {/* Waitlist CTA */}
-        <div
-          id="waitlist"
-          style={{
-            borderRadius: 16, padding: "28px 28px",
-            textAlign: "center",
-          }}>
-          <h2 style={{
-            fontFamily: "var(--font-serif)", fontSize: 20, fontWeight: 600,
-            color: "var(--fg-strong)", margin: "0 0 8px",
-          }}>
-            Get notified when Pro launches
-          </h2>
-          <p style={{ fontSize: 14, color: "var(--fg-muted)", margin: "0 0 20px" }}>
-            Early subscribers get launch pricing locked in for life.
-          </p>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const fd = new FormData(e.currentTarget);
-              try {
-                window.localStorage.setItem(
-                  "ccl-saathi-waitlist-email",
-                  JSON.stringify({ email: fd.get("email"), at: Date.now() })
-                );
-              } catch { /* ignore */ }
-              (e.target as HTMLFormElement).reset();
-              alert("You're on the list!");
-            }}
-            style={{ display: "flex", gap: 10, maxWidth: 440, margin: "0 auto", flexWrap: "wrap" }}
-          >
-            <input
-              type="email" name="email" required
-              placeholder="you@example.com"
-              style={{
-                flex: 1, minWidth: 200, height: 42, borderRadius: 8,
-                border: "1px solid var(--border-default)", padding: "0 12px",
-                fontSize: 14, fontFamily: "var(--font-sans)",
-                outline: "none", background: "var(--bg-surface)",
-              }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "var(--brand)")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border-default)")}
-            />
-            <button
-              type="submit"
-              style={{
-                height: 42, padding: "0 20px", borderRadius: 8,
-                background: "var(--brand)", border: "none",
-                color: "#fff", fontFamily: "var(--font-sans)",
-                fontSize: 14, fontWeight: 600, cursor: "pointer",
-                boxShadow: "var(--shadow-brand)",
-                transition: "background 0.15s",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--forest-600)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "var(--brand)")}
-            >
-              Join Waitlist
-            </button>
-          </form>
-        </div>
+        <WaitlistForm />
 
       </div>
 
