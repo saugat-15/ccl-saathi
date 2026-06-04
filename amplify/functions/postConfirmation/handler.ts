@@ -4,6 +4,7 @@ import { generateClient } from 'aws-amplify/data';
 import { getAmplifyDataClientConfig } from '@aws-amplify/backend/function/runtime';
 import { env } from '$amplify/env/post-confirmation';
 import type { Schema } from '../../data/resource';
+import { notifyAdminNewSignup } from './notifyAdminSignup';
 
 const { resourceConfig, libraryOptions } = await getAmplifyDataClientConfig(env);
 Amplify.configure(resourceConfig, libraryOptions);
@@ -27,6 +28,18 @@ export const handler: PostConfirmationTriggerHandler = async (event) => {
         throw new Error(createUser.errors[0].message);
       }
       console.log('user created', createUser.data?.id);
+
+      try {
+        await notifyAdminNewSignup({
+          userId: sub,
+          email: event.request.userAttributes.email,
+          givenName: event.request.userAttributes.given_name,
+          familyName: event.request.userAttributes.family_name,
+        });
+        console.log('admin signup notification sent');
+      } catch (err) {
+        console.error('failed to send admin signup notification', err);
+      }
     } else {
       console.log('user already exists', existing?.id);
     }
