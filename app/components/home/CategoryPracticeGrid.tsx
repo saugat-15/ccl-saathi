@@ -139,10 +139,10 @@ export default function CategoryPracticeGrid() {
         <div className="max-w-5xl mx-auto px-5 py-10">
           {/* Page header — only shown once user has started */}
           {hasStarted && (
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 28 }}>
-              <div>
+            <div className="flex flex-col gap-4 mb-7 md:flex-row md:items-start md:justify-between md:gap-4">
+              <div className="min-w-0">
                 <h1 style={{
-                  fontFamily: "var(--font-serif)", fontSize: 26, fontWeight: 600,
+                  fontFamily: "var(--font-serif)", fontSize: "clamp(22px, 5vw, 26px)", fontWeight: 600,
                   color: "var(--fg-strong)", margin: "0 0 6px", lineHeight: 1.2,
                 }}>
                   {greeting}
@@ -151,7 +151,7 @@ export default function CategoryPracticeGrid() {
                   Pick a category below to continue your practice.
                 </p>
               </div>
-              <div style={{ flexShrink: 0, marginTop: 4 }}>
+              <div className="w-full shrink-0 md:w-auto md:max-w-none md:mt-1">
                 <StreakCard userId={userId} />
               </div>
             </div>

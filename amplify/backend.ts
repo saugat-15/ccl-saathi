@@ -8,6 +8,7 @@ import { auth } from './auth/resource.js';
 import { data } from './data/resource.js';
 import { naatiProcessor } from './functions/naatiProcessor/resource.js';
 import { transcriptUpdater } from './functions/transcriptUpdater/resource.js';
+import { postConfirmation } from './functions/postConfirmation/resource.js';
 import { cclStorage as storage } from './storage/resource.js';
 
 const backend = defineBackend({
@@ -16,7 +17,16 @@ const backend = defineBackend({
   storage,
   naatiProcessor,
   transcriptUpdater,
+  postConfirmation,
 });
+
+backend.postConfirmation.resources.lambda.addToRolePolicy(
+  new iam.PolicyStatement({
+    effect: iam.Effect.ALLOW,
+    actions: ['ses:SendEmail', 'ses:SendRawEmail'],
+    resources: ['*'],
+  }),
+);
 
 const processorLambda = backend.naatiProcessor.resources.lambda as LambdaFunction;
 const { account, region } = Stack.of(processorLambda);
