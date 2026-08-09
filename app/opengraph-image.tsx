@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
 
-export const alt = "CCLSaathi — NAATI CCL bilingual practice";
+export const alt = "CCLSaathi: NAATI CCL bilingual practice";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -41,7 +41,7 @@ export default function OpenGraphImage() {
             lineHeight: 1.25,
           }}
         >
-          NAATI CCL bilingual practice — real dialogues, eight topic areas
+          NAATI CCL bilingual practice: real dialogues, eight topic areas
         </div>
         <div style={{ fontSize: 24, color: "#5c6d64", marginTop: 20, maxWidth: 800 }}>
           Structured audio exercises · Replay & self-assessment · Your pace

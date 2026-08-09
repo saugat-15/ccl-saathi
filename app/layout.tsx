@@ -14,13 +14,13 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://cclsaathi.com";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "CCLSaathi — NAATI CCL bilingual practice",
+    default: "CCLSaathi: NAATI CCL bilingual practice",
     template: "%s · CCLSaathi",
   },
   description:
-    "Practice realistic interpreter-style dialogues for the NAATI CCL exam. Eight topic areas, audio segments, replay and self-assessment — on your schedule.",
+    "Practice realistic interpreter-style dialogues for the NAATI CCL exam. Eight topic areas, audio segments, replay and self-assessment, on your schedule.",
   openGraph: {
-    title: "CCLSaathi — NAATI CCL bilingual practice",
+    title: "CCLSaathi: NAATI CCL bilingual practice",
     description:
       "Structured audio translation exercises across eight real-life NAATI CCL topic areas.",
     type: "website",
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "CCLSaathi — NAATI CCL bilingual practice",
+    title: "CCLSaathi: NAATI CCL bilingual practice",
     description:
       "Practice realistic bilingual dialogues for the NAATI CCL exam.",
   },

@@ -40,19 +40,19 @@ function HighlightedText({
             style={
               mode === "omission"
                 ? {
-                    background: "color-mix(in srgb, var(--score-low) 28%, transparent)",
-                    color: "var(--score-low)",
-                    padding: "1px 4px",
-                    marginInline: 1,
-                  }
+                  background: "color-mix(in srgb, var(--score-low) 28%, transparent)",
+                  color: "var(--score-low)",
+                  padding: "1px 4px",
+                  marginInline: 1,
+                }
                 : {
-                    /* amber-400 pops on dark; amber-500 reads muddy */
-                    background: "color-mix(in srgb, var(--amber-400) 38%, transparent)",
-                    color: "var(--amber-400)",
-                    boxShadow: "inset 0 0 0 1px color-mix(in srgb, var(--amber-400) 45%, transparent)",
-                    padding: "1px 4px",
-                    marginInline: 1,
-                  }
+                  /* amber-400 pops on dark; amber-500 reads muddy */
+                  background: "color-mix(in srgb, var(--amber-400) 38%, transparent)",
+                  color: "var(--amber-400)",
+                  boxShadow: "inset 0 0 0 1px color-mix(in srgb, var(--amber-400) 45%, transparent)",
+                  padding: "1px 4px",
+                  marginInline: 1,
+                }
             }
           >
             {part.value}

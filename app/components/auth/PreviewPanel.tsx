@@ -65,7 +65,7 @@ export default function PreviewPanel() {
         {/* Category label */}
         <p className="text-[10px] font-bold uppercase tracking-widest mb-2"
           style={{ color: "#6ee7b7" }}>
-          Health — 8 Dialogues
+          Health · 8 Dialogues
         </p>
 
         {/* Dialogue list */}

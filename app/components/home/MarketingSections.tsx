@@ -28,7 +28,7 @@ export default function MarketingSections({ isAuthenticated = false }: { isAuthe
               </h1>
               <p className="mt-4 text-base sm:text-lg text-muted-foreground max-w-xl leading-relaxed">
                 CCLSaathi gives NAATI CCL candidates structured audio translation exercises
-                across eight real-life topic areas — practise on your schedule, at your pace.
+                across eight real-life topic areas. Practise on your schedule, at your pace.
               </p>
               <div className="mt-8 flex flex-col sm:flex-row gap-3">
                 <Button size="lg" className="text-base px-6" asChild>
@@ -191,7 +191,7 @@ export default function MarketingSections({ isAuthenticated = false }: { isAuthe
               Everything you need to practise seriously
             </h2>
             <p className="mt-2 text-muted-foreground">
-              Focus on listening, interpreting, and self-review — the core skills the exam tests.
+              Focus on listening, interpreting, and self-review: the core skills the exam tests.
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -204,7 +204,7 @@ export default function MarketingSections({ isAuthenticated = false }: { isAuthe
               {
                 icon: BookOpen,
                 title: "Eight exam-relevant categories",
-                body: "Health, legal, housing, employment, and more — organised for targeted practice.",
+                body: "Health, legal, housing, employment, and more, organised for targeted practice.",
               },
               {
                 icon: RefreshCw,
@@ -302,7 +302,7 @@ export default function MarketingSections({ isAuthenticated = false }: { isAuthe
             {[
               {
                 quote:
-                  "I was struggling with health and legal dialogues — being able to practise on my own schedule made a real difference.",
+                  "I was struggling with health and legal dialogues. Being able to practise on my own schedule made a real difference.",
                 who: "NAATI CCL candidate",
                 where: "Melbourne",
               },
@@ -314,7 +314,7 @@ export default function MarketingSections({ isAuthenticated = false }: { isAuthe
               },
               {
                 quote:
-                  "Clear categories and real audio — it feels closer to exam pressure than reading scripts.",
+                  "Clear categories and real audio. It feels closer to exam pressure than reading scripts.",
                 who: "NAATI CCL candidate",
                 where: "Brisbane",
               },
@@ -323,7 +323,7 @@ export default function MarketingSections({ isAuthenticated = false }: { isAuthe
                 <CardContent className="pt-6">
                   <p className="text-sm text-foreground leading-relaxed">&ldquo;{t.quote}&rdquo;</p>
                   <p className="mt-4 text-xs text-muted-foreground">
-                    — {t.who}, {t.where}
+                    {t.who}, {t.where}
                   </p>
                 </CardContent>
               </Card>
@@ -400,7 +400,7 @@ export default function MarketingSections({ isAuthenticated = false }: { isAuthe
                   <Link href="/login?tab=signup">Get Pro</Link>
                 </Button>
                 <p className="mt-2 text-xs text-center text-muted-foreground">
-                  Billing coming soon — join waitlist for launch pricing.
+                  Billing coming soon. Join waitlist for launch pricing.
                 </p>
               </CardContent>
             </Card>
@@ -428,7 +428,7 @@ export default function MarketingSections({ isAuthenticated = false }: { isAuthe
             Be first to get new dialogues and exam tips
           </h2>
           <p className="mt-2 text-muted-foreground max-w-xl mx-auto">
-            Leave your email — we&apos;ll only send useful updates about CCLSaathi and the exam.
+            Leave your email and we&apos;ll only send useful updates about CCLSaathi and the exam.
           </p>
           <div className="mt-8">
             <WaitlistForm />
