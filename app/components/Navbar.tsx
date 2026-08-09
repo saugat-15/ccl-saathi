@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthenticator } from "@aws-amplify/ui-react";
-import { fetchUserAttributes } from "aws-amplify/auth";
+import { fetchAuthSession, fetchUserAttributes } from "aws-amplify/auth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,9 +29,19 @@ const IS_PRO = false;
 function getInitials(given: string, family: string, email: string) {
   if (given && family) return `${given[0]}${family[0]}`.toUpperCase();
   if (given) return given.slice(0, 2).toUpperCase();
-  const parts = email.split("@")[0].split(/[._-]/);
-  if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-  return email.slice(0, 2).toUpperCase();
+  const local = email.split("@")[0] ?? "";
+  if (local) {
+    const parts = local.split(/[._-]/).filter(Boolean);
+    if (parts.length >= 2 && parts[0][0] && parts[1][0]) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    return local.slice(0, 2).toUpperCase();
+  }
+  return "?";
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 const GUEST_NAV = [
@@ -76,19 +86,46 @@ export default function Navbar() {
 
   const [givenName, setGivenName] = useState("");
   const [familyName, setFamilyName] = useState("");
+  const [email, setEmail] = useState("");
 
-  const email = user?.signInDetails?.loginId ?? "";
   const authenticated = authStatus === "authenticated";
+  const loginId = user?.signInDetails?.loginId ?? "";
 
   useEffect(() => {
-    if (!authenticated) return;
-    fetchUserAttributes()
-      .then((attrs) => {
-        setGivenName(attrs.given_name ?? "");
-        setFamilyName(attrs.family_name ?? "");
-      })
-      .catch(() => { });
-  }, [authenticated]);
+    if (!authenticated) {
+      setGivenName("");
+      setFamilyName("");
+      setEmail("");
+      return;
+    }
+
+    // Prefer loginId immediately when Authenticator has it
+    if (loginId) setEmail((prev) => prev || loginId);
+
+    let cancelled = false;
+    async function loadProfile() {
+      // After login, tokens/attributes can lag briefly — retry like Storage auth-ready gating
+      for (let attempt = 0; attempt < 4; attempt++) {
+        try {
+          await fetchAuthSession();
+          const attrs = await fetchUserAttributes();
+          if (cancelled) return;
+          setGivenName(attrs.given_name ?? "");
+          setFamilyName(attrs.family_name ?? "");
+          setEmail(attrs.email ?? loginId ?? "");
+          return;
+        } catch {
+          if (attempt < 3) await sleep(250 * (attempt + 1));
+        }
+      }
+      if (!cancelled && loginId) setEmail(loginId);
+    }
+
+    void loadProfile();
+    return () => {
+      cancelled = true;
+    };
+  }, [authenticated, loginId, user?.userId]);
 
   const initials = getInitials(givenName, familyName, email);
   const displayName = givenName && familyName ? `${givenName} ${familyName}` : givenName || email;

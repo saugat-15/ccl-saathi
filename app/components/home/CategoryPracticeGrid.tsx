@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { list } from "aws-amplify/storage";
 import { useAuthenticator } from "@aws-amplify/ui-react";
-import { fetchUserAttributes, getCurrentUser } from "aws-amplify/auth";
+import { fetchAuthSession, fetchUserAttributes, getCurrentUser } from "aws-amplify/auth";
 import { generateClient } from "aws-amplify/data";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,6 +25,35 @@ type CategoryEntry = { name: string; label: string; count: number };
 
 function toLabel(s: string) {
   return s.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** After login, authStatus can be ready before Cognito Identity credentials for Storage. */
+async function listDialoguesWithAuthReady() {
+  const maxAttempts = 4;
+  let lastError: unknown;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      const session = await fetchAuthSession();
+      if (!session.tokens) {
+        throw new Error("Auth tokens not ready");
+      }
+      // Force credential resolution for S3 when the identity pool creds are still cold
+      if (!session.credentials) {
+        await fetchAuthSession({ forceRefresh: true });
+      }
+      return await list({ path: "dialogues/", options: { listAll: true } });
+    } catch (err) {
+      lastError = err;
+      if (attempt < maxAttempts - 1) {
+        await sleep(250 * (attempt + 1));
+      }
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("Failed to list dialogues");
 }
 
 export default function CategoryPracticeGrid() {
@@ -89,7 +118,7 @@ export default function CategoryPracticeGrid() {
       setIsLoading(true);
       setLoadError(null);
       try {
-        const { items } = await list({ path: "dialogues/", options: { listAll: true } });
+        const { items } = await listDialoguesWithAuthReady();
         if (cancelled) return;
         const counts = new Map<string, number>();
         for (const item of items) {
@@ -116,7 +145,7 @@ export default function CategoryPracticeGrid() {
             })
         );
       } catch {
-        setLoadError("Failed to load categories.");
+        if (!cancelled) setLoadError("Failed to load categories.");
       } finally {
         if (!cancelled) setIsLoading(false);
       }

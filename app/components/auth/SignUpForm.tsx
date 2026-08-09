@@ -6,6 +6,7 @@ Amplify.configure(outputs, { ssr: true });
 
 import { useState } from "react";
 import { signUp, confirmSignUp, signIn } from "aws-amplify/auth";
+import { toUserFacingError } from "@/lib/userFacingError";
 
 type Step = "form" | "confirm";
 
@@ -25,7 +26,7 @@ export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () 
       await signUp({ username: email, password, options: { userAttributes: { email } } });
       setStep("confirm");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Sign up failed.");
+      setError(toUserFacingError(err, "Sign up failed. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -39,7 +40,7 @@ export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () 
       await confirmSignUp({ username: email, confirmationCode: code });
       await signIn({ username: email, password });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Verification failed.");
+      setError(toUserFacingError(err, "Verification failed. Please check the code and try again."));
     } finally {
       setLoading(false);
     }

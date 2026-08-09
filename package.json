@@ -23,6 +23,7 @@
     "aws-amplify": "^6.6.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "diff": "^9.0.0",
     "lucide-react": "^1.14.0",
     "next": "14.2.10",
     "next-themes": "^0.4.6",
@@ -35,6 +36,7 @@
   "devDependencies": {
     "@aws-amplify/backend": "^1.22.0",
     "@aws-amplify/backend-cli": "^1.8.2",
+    "@types/diff": "^7.0.2",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

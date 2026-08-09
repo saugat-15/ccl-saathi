@@ -24,6 +24,12 @@ type S3EventNotification = { Records: S3Record[] };
 
 const OPENAI_TRANSCRIPTIONS_URL = 'https://api.openai.com/v1/audio/transcriptions';
 
+const GENERIC_ATTEMPT_ERROR =
+    'Something went wrong while processing this attempt. Please try again.';
+
+const RATE_LIMIT_ATTEMPT_ERROR =
+    'You already have an attempt being processed. Please wait for it to complete.';
+
 /** Saved to `{TRANSCRIBE_OUTPUT_PREFIX}{recordingId}/transcript.json`. */
 type WhisperStoredTranscript = {
     source: 'openai-whisper';
@@ -403,10 +409,9 @@ export const handler = async (
         });
         const othersInFlight = (inFlight ?? []).filter((r) => r.id !== recordingId);
         if (othersInFlight.length >= MAX_CONCURRENT) {
-            const msg = 'You already have an attempt being processed. Please wait for it to complete.';
             console.warn('Rate limit hit — too many in-flight recordings', { userId: recordingCheck.userId, recordingId, inFlightCount: othersInFlight.length });
-            await dataClient.models.Recording.update({ id: recordingId, status: 'FAILED', errorMessage: msg });
-            results.push({ recordingId, sourceKey: key, error: msg });
+            await dataClient.models.Recording.update({ id: recordingId, status: 'FAILED', errorMessage: RATE_LIMIT_ATTEMPT_ERROR });
+            results.push({ recordingId, sourceKey: key, error: RATE_LIMIT_ATTEMPT_ERROR });
             continue;
         }
 
@@ -422,7 +427,7 @@ export const handler = async (
         } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
             console.error('OpenAI API key unavailable', { message });
-            await dataClient.models.Recording.update({ id: recordingId, status: 'FAILED', errorMessage: message });
+            await dataClient.models.Recording.update({ id: recordingId, status: 'FAILED', errorMessage: GENERIC_ATTEMPT_ERROR });
             results.push({ recordingId, sourceKey: key, error: message });
             continue;
         }
@@ -438,7 +443,7 @@ export const handler = async (
         } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
             console.error('Failed to read recording from S3', { key, message });
-            await dataClient.models.Recording.update({ id: recordingId, status: 'FAILED', errorMessage: message });
+            await dataClient.models.Recording.update({ id: recordingId, status: 'FAILED', errorMessage: GENERIC_ATTEMPT_ERROR });
             results.push({ recordingId, sourceKey: key, error: message });
             continue;
         }
@@ -463,7 +468,7 @@ export const handler = async (
                 message,
                 stack: err instanceof Error ? err.stack : undefined,
             });
-            await dataClient.models.Recording.update({ id: recordingId, status: 'FAILED', errorMessage: message });
+            await dataClient.models.Recording.update({ id: recordingId, status: 'FAILED', errorMessage: GENERIC_ATTEMPT_ERROR });
             results.push({ recordingId, sourceKey: key, error: message });
         }
     }

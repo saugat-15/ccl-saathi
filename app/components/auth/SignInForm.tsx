@@ -6,6 +6,7 @@ Amplify.configure(outputs, { ssr: true });
 
 import { useState } from "react";
 import { signIn } from "aws-amplify/auth";
+import { toUserFacingError } from "@/lib/userFacingError";
 
 export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () => void }) {
   const [email, setEmail] = useState("");
@@ -20,7 +21,7 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
     try {
       await signIn({ username: email, password });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Sign in failed.");
+      setError(toUserFacingError(err, "Sign in failed. Please check your email and password."));
     } finally {
       setLoading(false);
     }

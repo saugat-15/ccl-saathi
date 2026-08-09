@@ -7,6 +7,8 @@ interface AudioRecorderProps {
   onReRecordStart?: () => void;
   isDisabled?: boolean;
   maxDurationSeconds?: number;
+  /** Hydrate from an IndexedDB draft after reload. */
+  restoredRecording?: { blob: Blob; mimeType: string } | null;
 }
 
 type RecorderState = "idle" | "recording" | "recorded";
@@ -24,9 +26,14 @@ export default function AudioRecorder({
   onReRecordStart,
   isDisabled,
   maxDurationSeconds = 300,
+  restoredRecording = null,
 }: AudioRecorderProps) {
-  const [state, setState] = useState<RecorderState>("idle");
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [state, setState] = useState<RecorderState>(() =>
+    restoredRecording ? "recorded" : "idle",
+  );
+  const [audioUrl, setAudioUrl] = useState<string | null>(() =>
+    restoredRecording ? URL.createObjectURL(restoredRecording.blob) : null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [elapsedSec, setElapsedSec] = useState(0);
   const [recordedDuration, setRecordedDuration] = useState(0);
@@ -41,6 +48,7 @@ export default function AudioRecorder({
   const [isPlaying, setIsPlaying] = useState(false);
   const [playTime, setPlayTime] = useState(0);
   const [playDuration, setPlayDuration] = useState(0);
+  const [confirmReRecord, setConfirmReRecord] = useState(false);
 
   const clearTick = useCallback(() => {
     if (tickRef.current) { clearInterval(tickRef.current); tickRef.current = null; }
@@ -117,6 +125,7 @@ export default function AudioRecorder({
     if (audioUrl) { URL.revokeObjectURL(audioUrl); setAudioUrl(null); }
     chunksRef.current = [];
     mediaRecorderRef.current = null;
+    setConfirmReRecord(false);
     setState("idle");
     setPlayTime(0); setPlayDuration(0); setIsPlaying(false);
     setRecordedDuration(0);
@@ -306,32 +315,78 @@ export default function AudioRecorder({
           </div>
 
           {/* Re-record + saved indicator */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingInline: 2 }}>
-            <button
-              type="button"
-              onClick={reRecord}
-              disabled={isDisabled}
-              style={{
-                background: "transparent",
-                border: "1px solid var(--border-default)",
-                padding: "6px 14px", borderRadius: 8,
-                fontSize: 13, fontWeight: 500, color: "var(--fg-default)",
-                cursor: isDisabled ? "not-allowed" : "pointer",
-                fontFamily: "var(--font-sans)",
-                transition: "border-color 0.15s",
-              }}
-            >
-              Re-record
-            </button>
-            <span style={{
-              display: "flex", alignItems: "center", gap: 5,
-              fontSize: 12, fontWeight: 600, color: "var(--success)",
-            }}>
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden>
-                <path d="M2 6.5l3 3L11 3" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Recording saved
-            </span>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, paddingInline: 2 }}>
+            {confirmReRecord ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: 12, color: "var(--fg-muted)", margin: 0, lineHeight: 1.4 }}>
+                  Discard this recording and start again?
+                </p>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    onClick={reRecord}
+                    disabled={isDisabled}
+                    style={{
+                      background: "var(--danger)",
+                      border: "none",
+                      padding: "6px 14px", borderRadius: 8,
+                      fontSize: 13, fontWeight: 600, color: "#fff",
+                      cursor: isDisabled ? "not-allowed" : "pointer",
+                      fontFamily: "var(--font-sans)",
+                    }}
+                  >
+                    Yes, re-record
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmReRecord(false)}
+                    disabled={isDisabled}
+                    style={{
+                      background: "transparent",
+                      border: "1px solid var(--border-default)",
+                      padding: "6px 14px", borderRadius: 8,
+                      fontSize: 13, fontWeight: 500, color: "var(--fg-default)",
+                      cursor: isDisabled ? "not-allowed" : "pointer",
+                      fontFamily: "var(--font-sans)",
+                    }}
+                  >
+                    Keep recording
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = playbackRef.current;
+                    if (el && !el.paused) el.pause();
+                    setConfirmReRecord(true);
+                  }}
+                  disabled={isDisabled}
+                  style={{
+                    background: "transparent",
+                    border: "1px solid var(--border-default)",
+                    padding: "6px 14px", borderRadius: 8,
+                    fontSize: 13, fontWeight: 500, color: "var(--fg-default)",
+                    cursor: isDisabled ? "not-allowed" : "pointer",
+                    fontFamily: "var(--font-sans)",
+                    transition: "border-color 0.15s",
+                  }}
+                >
+                  Re-record
+                </button>
+                <span style={{
+                  display: "flex", alignItems: "center", gap: 5,
+                  fontSize: 12, fontWeight: 600, color: "var(--success)",
+                }}>
+                  <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden>
+                    <path d="M2 6.5l3 3L11 3" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  Recording saved
+                </span>
+              </>
+            )}
           </div>
         </>
       )}
