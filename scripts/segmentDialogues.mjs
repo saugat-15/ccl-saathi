@@ -4,12 +4,13 @@
  * What this does:
  * 1. Extracts text from each PDF using pdf-parse
  * 2. Sends extracted text to GPT-4o to get structured segments
- * 3. Runs Whisper once (language en) on each MP3 for segment timestamps only
- * 4. Finds speech boundaries via ffmpeg silencedetect; merges chime+interpretation-window silence
+ * 3. Repairs U+FFFD gaps in Devanagari (PDF font/ToUnicode loss) via a second GPT-4o pass
+ * 4. Runs Whisper once (language en) on each MP3 for segment timestamps only
+ * 5. Finds speech boundaries via ffmpeg silencedetect; merges chime+interpretation-window silence
  *    pairs into composite boundaries so cuts land at the chime; trims intro; Whisper for intro
  *    alignment + fallback if silence regions are too few
- * 5. Cuts MP3 into individual segment files using ffmpeg
- * 6. Uploads segments + reference JSON to S3
+ * 6. Cuts MP3 into individual segment files using ffmpeg
+ * 7. Uploads segments + reference JSON to S3
  *
  * Setup:
  *   npm install openai @aws-sdk/client-s3 pdf-parse
@@ -33,6 +34,9 @@
  *
  * SKIP_IF_EXISTS: when set, if reference.json and at least one segment .mp3 exist under
  * OUTPUT_DIR/<dialogue id>/<dialogue name>/, skips PDF/GPT/Whisper/ffmpeg and still uploads to S3.
+ *   If that reference.json still has U+FFFD in Devanagari, the repair pass still runs before upload.
+ *
+ * SKIP_DEVANAGARI_REPAIR: set to "1" or "true" to skip the U+FFFD repair pass.
  *
  * macOS: if you see EPERM / "Operation not permitted" under ~/Downloads, the app running node (Terminal,
  * Cursor, etc.) needs Files and Folders or Full Disk Access, or set DIALOGUES_DIR to a path outside Downloads.
@@ -51,6 +55,9 @@ const DIALOGUES_DIR =
 const OUTPUT_DIR = process.env.OUTPUT_DIR ?? path.join(process.cwd(), "output");
 const SKIP_IF_EXISTS =
   process.env.SKIP_IF_EXISTS === "1" || process.env.SKIP_IF_EXISTS === "true";
+const SKIP_DEVANAGARI_REPAIR =
+  process.env.SKIP_DEVANAGARI_REPAIR === "1" ||
+  process.env.SKIP_DEVANAGARI_REPAIR === "true";
 const S3_BUCKET = process.env.S3_BUCKET;
 const AWS_REGION = process.env.AWS_REGION ?? "ap-southeast-2";
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -235,6 +242,186 @@ const validatePdfExtraction = (data) => {
   }
 
   return { ...data, segments: byIndex };
+};
+
+/** PDF text extract often yields U+FFFD where Devanagari conjuncts failed ToUnicode mapping. */
+const REPLACEMENT_CHAR = "\uFFFD";
+
+const stringHasReplacementChar = (value) =>
+  typeof value === "string" && value.includes(REPLACEMENT_CHAR);
+
+const segmentHasDevanagariCorruption = (seg) =>
+  stringHasReplacementChar(seg?.original) ||
+  stringHasReplacementChar(seg?.translation) ||
+  stringHasReplacementChar(seg?.expectedInterpretation);
+
+const countReplacementCharsInSegments = (segments) => {
+  let n = 0;
+  for (const seg of segments) {
+    for (const key of ["original", "translation", "expectedInterpretation"]) {
+      const value = seg?.[key];
+      if (typeof value === "string") {
+        for (const ch of value) {
+          if (ch === REPLACEMENT_CHAR) n += 1;
+        }
+      }
+    }
+  }
+  return n;
+};
+
+/**
+ * Second GPT pass: replace U+FFFD only, using bilingual context.
+ * Repairs one dirty segment at a time so the model cannot skip later turns.
+ * Returns a new segments array when anything changed; otherwise the same reference.
+ */
+const repairSingleSegmentDevanagari = async (seg, meta = {}) => {
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      {
+        role: "system",
+        content: `You repair one NAATI CCL dialogue segment where PDF extraction replaced some Devanagari glyphs with U+FFFD.
+Return one JSON object only (no markdown).
+Rules:
+- Fix every U+FFFD in original / translation / expectedInterpretation.
+- Leave clean English and already-correct Nepali unchanged.
+- Replace each U+FFFD with the correct Devanagari character(s); do not paraphrase.
+- Use the English meaning to reconstruct missing Nepali.
+- Prefer standard Nepali CCL register.
+- The returned strings must contain zero U+FFFD characters.`,
+      },
+      {
+        role: "user",
+        content: `Repair this segment. Return JSON:
+{
+  "segmentIndex": ${seg.segmentIndex},
+  "original": string,
+  "translation": string or null,
+  "expectedInterpretation": string
+}
+
+Domain: ${meta.domain ?? "unknown"}
+Scenario: ${meta.scenario ?? "unknown"}
+Segment:
+${JSON.stringify(
+  {
+    segmentIndex: seg.segmentIndex,
+    speaker: seg.speaker,
+    original: seg.original,
+    translation: seg.translation ?? null,
+    expectedInterpretation: seg.expectedInterpretation,
+  },
+  null,
+  2,
+)}`,
+      },
+    ],
+    max_completion_tokens: 2_048,
+    temperature: 0.1,
+    response_format: { type: "json_object" },
+  });
+
+  const raw = response.choices[0]?.message?.content ?? "";
+  let parsed;
+  try {
+    parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
+  } catch {
+    console.error(
+      `  ❌ Repair JSON.parse failed for segment ${seg.segmentIndex}:`,
+    );
+    console.error(raw.slice(0, 600));
+    return null;
+  }
+
+  return {
+    original:
+      typeof parsed.original === "string" ? parsed.original : seg.original,
+    translation:
+      parsed.translation === null || typeof parsed.translation === "string"
+        ? parsed.translation
+        : seg.translation,
+    expectedInterpretation:
+      typeof parsed.expectedInterpretation === "string"
+        ? parsed.expectedInterpretation
+        : seg.expectedInterpretation,
+  };
+};
+
+const repairDevanagariCorruption = async (segments, meta = {}) => {
+  if (SKIP_DEVANAGARI_REPAIR) {
+    console.log("  ⏭  Devanagari repair skipped (SKIP_DEVANAGARI_REPAIR)");
+    return segments;
+  }
+
+  const dirtyIndexes = segments
+    .filter(segmentHasDevanagariCorruption)
+    .map((s) => s.segmentIndex);
+  if (dirtyIndexes.length === 0) {
+    console.log("  ✅ No U+FFFD corruption in Devanagari fields");
+    return segments;
+  }
+
+  const beforeCount = countReplacementCharsInSegments(segments);
+  console.log(
+    `  🔧 Repairing Devanagari U+FFFD in ${dirtyIndexes.length}/${segments.length} segment(s) (${beforeCount} replacement char(s), one at a time)…`,
+  );
+
+  let changed = false;
+  const merged = [...segments];
+
+  for (const index of dirtyIndexes) {
+    const i = merged.findIndex((s) => s.segmentIndex === index);
+    if (i < 0) continue;
+    const seg = merged[i];
+    const before = countReplacementCharsInSegments([seg]);
+
+    let repaired = await repairSingleSegmentDevanagari(seg, meta);
+    if (!repaired) {
+      console.warn(`  ⚠️  Segment ${index}: repair failed — left unchanged`);
+      continue;
+    }
+
+    // One retry if model still left U+FFFD
+    if (segmentHasDevanagariCorruption(repaired)) {
+      console.warn(
+        `  ⚠️  Segment ${index}: still had U+FFFD after first pass — retrying…`,
+      );
+      repaired =
+        (await repairSingleSegmentDevanagari(
+          { ...seg, ...repaired },
+          meta,
+        )) ?? repaired;
+    }
+
+    const next = { ...seg, ...repaired };
+    const after = countReplacementCharsInSegments([next]);
+    if (after > 0) {
+      console.warn(
+        `  ⚠️  Segment ${index}: ${after} U+FFFD remain (${before} → ${after})`,
+      );
+    } else {
+      console.log(`  ✅ Segment ${index}: cleared U+FFFD (${before} → 0)`);
+    }
+    merged[i] = next;
+    changed = true;
+  }
+
+  if (!changed) return segments;
+
+  const afterCount = countReplacementCharsInSegments(merged);
+  const stillDirty = merged.filter(segmentHasDevanagariCorruption).length;
+  if (afterCount > 0) {
+    console.warn(
+      `  ⚠️  Repair left ${afterCount} U+FFFD in ${stillDirty} segment(s) — review manually`,
+    );
+  } else {
+    console.log(
+      `  ✅ Devanagari repair cleared all U+FFFD (${beforeCount} → 0)`,
+    );
+  }
+
+  return merged;
 };
 
 // ─── Step 1: Extract segments from PDF ────────────────────
@@ -873,6 +1060,19 @@ const processDialogue = async (dialogue) => {
         `reference.json has no segments (delete output and re-run, or fix file): ${referenceJsonPath}`,
       );
     }
+
+    const repairedSegments = await repairDevanagariCorruption(
+      referenceJson.segments,
+      { domain: referenceJson.domain, scenario: referenceJson.scenario },
+    );
+    if (repairedSegments !== referenceJson.segments) {
+      referenceJson = { ...referenceJson, segments: repairedSegments };
+      fs.writeFileSync(
+        referenceJsonPath,
+        JSON.stringify(referenceJson, null, 2),
+      );
+    }
+
     await uploadDialogueToS3(
       dialogue,
       referenceJson,
@@ -890,9 +1090,13 @@ const processDialogue = async (dialogue) => {
 
   fs.mkdirSync(segmentsOut, { recursive: true });
 
-  // 1. Extract segments from PDF via GPT-4o
+  // 1. Extract segments from PDF via GPT-4o, then repair PDF U+FFFD in Devanagari
   const pdfData = await extractSegmentsFromPdf(pdfPath);
   console.log(`  ✅ ${pdfData.segments.length} segments extracted from PDF`);
+  pdfData.segments = await repairDevanagariCorruption(pdfData.segments, {
+    domain: pdfData.domain,
+    scenario: pdfData.scenario,
+  });
 
   // 2. Whisper once (en): one timeline; Nepali turns still get boundaries from segment order
   const whisperSegments = await transcribeWithWhisper(mp3Path, "en");
@@ -976,6 +1180,11 @@ const main = async () => {
   console.log(`☁️  Bucket : ${S3_BUCKET}`);
   console.log(`🌏 Region : ${AWS_REGION}`);
   console.log(`AWS Profile : ${process.env.AWS_PROFILE || "default"}`);
+  if (process.env.AWS_PROFILE && process.env.AWS_PROFILE !== "default") {
+    console.log(
+      `   (SDK will use profile "${process.env.AWS_PROFILE}" — it must have keys/SSO in ~/.aws)`,
+    );
+  }
   if (SKIP_IF_EXISTS) {
     console.log(
       `⏭  Skip if local artifacts exist: yes (skips PDF/GPT/Whisper/ffmpeg; still uploads to S3)\n`,
@@ -1020,10 +1229,13 @@ const main = async () => {
         segments: result.totalSegments,
       });
     } catch (err) {
-      const message =
+      let message =
         err instanceof Error
           ? withFilesystemPermissionHint(err, err.message)
           : String(err);
+      if (/credentials/i.test(message)) {
+        message += `\n     Hint: AWS_PROFILE=${process.env.AWS_PROFILE || "(unset)"} — profile "saugat-dev" has no keys; use default (omit AWS_PROFILE) or aws configure --profile saugat-dev`;
+      }
       console.error(`  ❌ Failed: ${dialogue.name} —`, message);
       results.push({
         dialogue: dialogue.id,

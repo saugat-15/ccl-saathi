@@ -13,7 +13,11 @@ import { Separator } from "@/components/ui/separator";
 import { ChevronLeft, FileText } from "lucide-react";
 import type { Schema } from "@/amplify/data/resource";
 import { cn } from "@/lib/utils";
-import ScoreReport, { type FeedbackDetails } from "@/app/components/attempt/ScoreReport";
+import { attemptFailureMessage } from "@/lib/userFacingError";
+import ScoreReport, {
+  type FeedbackDetails,
+  type GradedSegmentDetails,
+} from "@/app/components/attempt/ScoreReport";
 import { ScoreReportSkeleton } from "@/app/components/attempt/ScoreReportSkeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -89,9 +93,7 @@ function feedbackToDetails(fb: FeedbackItem): FeedbackDetails {
     criticalErrors: parseJsonArray<{ segmentIndex?: number; type?: string; impact?: string }>(
       fb.criticalErrors,
     ),
-    gradedSegments: parseJsonArray<{ segmentIndex?: number; segmentAccuracy?: number; comment?: string }>(
-      fb.gradedSegments,
-    ),
+    gradedSegments: parseJsonArray<GradedSegmentDetails>(fb.gradedSegments),
     examReadinessLevel: fb.examReadinessLevel ?? null,
     examReadinessReason: fb.examReadinessReason ?? null,
   };
@@ -320,9 +322,9 @@ export default function DialogueAttemptsPage({
                           >
                             {fmtDate(attempt.createdAt)}
                           </p>
-                          {attempt.status === "FAILED" && attempt.errorMessage && (
+                          {attempt.status === "FAILED" && (
                             <p className="text-xs mt-1 text-destructive">
-                              {attempt.errorMessage}
+                              {attemptFailureMessage(attempt.errorMessage)}
                             </p>
                           )}
                         </div>

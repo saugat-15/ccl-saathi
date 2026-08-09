@@ -11,8 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ChevronLeft } from "lucide-react";
 import type { Schema } from "@/amplify/data/resource";
-import ScoreReport, { type FeedbackDetails } from "@/app/components/attempt/ScoreReport";
+import ScoreReport, {
+  type FeedbackDetails,
+  type GradedSegmentDetails,
+} from "@/app/components/attempt/ScoreReport";
 import { ScoreReportSkeleton } from "@/app/components/attempt/ScoreReportSkeleton";
+import { toUserFacingError } from "@/lib/userFacingError";
 
 const client = generateClient<Schema>();
 
@@ -84,15 +88,13 @@ export default function AttemptDetailPage({
           criticalErrors: parseJsonArray<{ segmentIndex?: number; type?: string; impact?: string }>(
             feedback.criticalErrors,
           ),
-          gradedSegments: parseJsonArray<{ segmentIndex?: number; segmentAccuracy?: number; comment?: string }>(
-            feedback.gradedSegments,
-          ),
+          gradedSegments: parseJsonArray<GradedSegmentDetails>(feedback.gradedSegments),
           examReadinessLevel: feedback.examReadinessLevel ?? null,
           examReadinessReason: feedback.examReadinessReason ?? null,
         };
         if (!cancelled) setDetails(parsed);
       } catch (err) {
-        if (!cancelled) setLoadError(err instanceof Error ? err.message : "Failed to load feedback.");
+        if (!cancelled) setLoadError(toUserFacingError(err, "Failed to load feedback. Please try again."));
       } finally {
         if (!cancelled) setIsLoading(false);
       }

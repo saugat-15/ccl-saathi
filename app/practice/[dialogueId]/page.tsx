@@ -17,7 +17,13 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { ChevronLeft, Play, Pause, Loader2, CheckCircle2, Lock, Zap, X, RotateCcw, Trophy } from "lucide-react";
-
+import {
+  clearPracticeDraft,
+  deletePracticeDraftSegment,
+  loadPracticeDraft,
+  savePracticeDraftSegment,
+} from "@/lib/practiceDrafts";
+import { toUserFacingError } from "@/lib/userFacingError";
 const client = generateClient<Schema>();
 
 async function resolveBillingProfile(userId: string) {
@@ -227,6 +233,67 @@ function AudioPlayer({ audioUrl, isUnlocked }: { audioUrl: string, isUnlocked: b
   );
 }
 
+const SHOW_SOURCE_TEXT_KEY = "ccl-show-source-text";
+
+function SourceTextToggle({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (next: boolean) => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className="flex items-start gap-2.5 text-left select-none w-full"
+      style={{
+        marginBottom: 16,
+        background: "none",
+        border: "none",
+        padding: 0,
+        cursor: "pointer",
+      }}
+    >
+      <span
+        className="relative shrink-0 mt-0.5 rounded-full transition-colors"
+        style={{
+          width: 36,
+          height: 20,
+          background: checked ? "var(--progress-fill)" : "var(--border-default)",
+        }}
+      >
+        <span
+          className="absolute top-0.5 rounded-full bg-white transition-transform"
+          style={{
+            width: 16,
+            height: 16,
+            left: 2,
+            transform: checked ? "translateX(16px)" : "translateX(0)",
+            boxShadow: "0 1px 2px rgba(0,0,0,0.15)",
+          }}
+        />
+      </span>
+      <span className="min-w-0">
+        <span
+          className="block text-xs font-semibold leading-tight"
+          style={{ color: "var(--fg-strong)" }}
+        >
+          Source text
+        </span>
+        <span
+          className="block text-[11px] leading-snug mt-0.5"
+          style={{ color: "var(--fg-muted)" }}
+        >
+          Turn off to practise listening only
+        </span>
+      </span>
+    </button>
+  );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function PracticePage({ params }: { params: { dialogueId: string } }) {
   const router = useRouter();
@@ -252,6 +319,24 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
   const [processingStatus, setProcessingStatus] = useState<RecordingStatus>("UPLOADED");
   const [latestScore, setLatestScore] = useState<number | null>(null);
   const [previousScore, setPreviousScore] = useState<number | null>(null);
+  const [practiceUserId, setPracticeUserId] = useState<string | null>(null);
+  const [showSourceText, setShowSourceText] = useState(() => {
+    if (typeof window === "undefined") return true;
+    try {
+      return localStorage.getItem(SHOW_SOURCE_TEXT_KEY) !== "0";
+    } catch {
+      return true;
+    }
+  });
+
+  function handleShowSourceTextChange(next: boolean) {
+    setShowSourceText(next);
+    try {
+      localStorage.setItem(SHOW_SOURCE_TEXT_KEY, next ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  }
 
   useEffect(() => {
     async function load() {
@@ -259,6 +344,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
       setLoadError(null);
       try {
         const { userId } = await getCurrentUser();
+        setPracticeUserId(userId);
 
         // ── Subscription / free-attempt gate ────────────────────────────────
         const billing = await resolveBillingProfile(userId);
@@ -285,13 +371,31 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
         if (segs.length === 0) throw new Error("Transcript has no segments.");
 
         setTranscriptSegments(segs);
-        setSegmentStates(segs.map(() => ({ blob: null, mimeType: null, recordedUrl: null, recorded: false })));
-        setCurrentIndex(0);
+
+        const draft = await loadPracticeDraft(userId, basePath);
+        const draftByIndex = new Map(
+          (draft?.segments ?? []).map((s) => [s.segmentIndex, s] as const),
+        );
+        const restored: SegmentState[] = segs.map((_, i) => {
+          const saved = draftByIndex.get(i);
+          if (!saved) {
+            return { blob: null, mimeType: null, recordedUrl: null, recorded: false };
+          }
+          return {
+            blob: saved.blob,
+            mimeType: saved.mimeType,
+            recordedUrl: URL.createObjectURL(saved.blob),
+            recorded: true,
+          };
+        });
+        setSegmentStates(restored);
+        const firstOpen = restored.findIndex((s) => !s.recorded);
+        setCurrentIndex(firstOpen === -1 ? restored.length : firstOpen);
 
         const urlResults = await Promise.allSettled(segs.map((seg) => getUrl({ path: seg.audioKey })));
         setSegmentAudioUrls(urlResults.map((r) => r.status === "fulfilled" ? r.value.url.toString() : null));
       } catch (err) {
-        setLoadError(err instanceof Error ? err.message : "Failed to load dialogue.");
+        setLoadError(toUserFacingError(err, "Failed to load dialogue. Please try again."));
       } finally {
         setIsLoading(false);
       }
@@ -340,6 +444,11 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
       return next;
     });
     if (index === currentIndex) setCurrentIndex(index + 1);
+    if (practiceUserId) {
+      void savePracticeDraftSegment(practiceUserId, basePath, index, blob, mimeType).catch(() => {
+        /* draft persist is best-effort */
+      });
+    }
   }
 
   function handleSegmentReRecord(index: number) {
@@ -350,6 +459,11 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
       next[index] = { blob: null, mimeType: null, recordedUrl: null, recorded: false };
       return next;
     });
+    if (practiceUserId) {
+      void deletePracticeDraftSegment(practiceUserId, basePath, index).catch(() => {
+        /* draft persist is best-effort */
+      });
+    }
   }
 
   async function handleSubmit(recordings: SegmentState[]) {
@@ -402,8 +516,9 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
       setProcessingStatus("UPLOADED");
       setLatestScore(null);
       setSubmitDone(true);
+      await clearPracticeDraft(userId, basePath);
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : "An unexpected error occurred.");
+      setSubmitError(toUserFacingError(err, "Something went wrong while submitting. Please try again."));
     } finally {
       setIsSubmitting(false);
     }
@@ -418,6 +533,9 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
     setRecordingId(null);
     setProcessingStatus("UPLOADED");
     setLatestScore(null);
+    if (practiceUserId) {
+      void clearPracticeDraft(practiceUserId, basePath);
+    }
   }
 
   const isScoreReady = processingStatus === "COMPLETED";
@@ -598,6 +716,12 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
             <p style={{ fontSize: 14, color: "var(--fg-muted)", margin: 0 }}>
               Listen and record your interpretation for each segment in order.
             </p>
+            <div className="lg:hidden mt-4">
+              <SourceTextToggle
+                checked={showSourceText}
+                onChange={handleShowSourceTextChange}
+              />
+            </div>
           </div>
 
           {/* Previous score banner */}
@@ -708,6 +832,28 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
                           fontWeight: 700, color: "var(--fg-muted)", margin: "0 0 7px"
                         }}>Listen</p>
                         <AudioPlayer audioUrl={segAudioUrl} isUnlocked={isUnlocked} />
+                        {showSourceText && isUnlocked && transcript?.original && (
+                          <div style={{
+                            marginTop: 10,
+                            padding: "10px 12px",
+                            borderRadius: 10,
+                            background: "var(--bg-sunken)",
+                            border: "1px solid var(--border-subtle)",
+                          }}>
+                            <p style={{
+                              fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase",
+                              fontWeight: 700, color: "var(--fg-muted)", margin: "0 0 6px",
+                            }}>
+                              Source — interpret this
+                            </p>
+                            <p style={{
+                              fontSize: 13, color: "var(--fg-default)", margin: 0,
+                              lineHeight: 1.55, whiteSpace: "pre-wrap",
+                            }}>
+                              {transcript.original}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <p style={{ fontSize: 13, color: "var(--fg-muted)", margin: 0 }}>Audio unavailable.</p>
@@ -721,7 +867,12 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
                         </p>
                       )}
                       <AudioRecorder
-                        key={`recorder-${i}-${isUnlocked}`}
+                        key={`recorder-${i}-${isUnlocked}-${seg.recorded ? "saved" : "new"}`}
+                        restoredRecording={
+                          seg.recorded && seg.blob && seg.mimeType
+                            ? { blob: seg.blob, mimeType: seg.mimeType }
+                            : null
+                        }
                         onRecordingComplete={(blob, mimeType) => handleSegmentRecorded(i, blob, mimeType)}
                         onReRecordStart={() => handleSegmentReRecord(i)}
                         isDisabled={!isUnlocked || isSubmitting}
@@ -772,6 +923,10 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
 
         {/* ── Right: fixed-height segment progress ────────────────────── */}
         <aside className="hidden lg:flex w-52 shrink-0 flex-col overflow-y-auto py-8">
+          <SourceTextToggle
+            checked={showSourceText}
+            onChange={handleShowSourceTextChange}
+          />
           <SegmentStepper
             segments={transcriptSegments.map((s) => ({ speaker: s.speaker }))}
             recorded={segmentStates.map((s) => s.recorded)}

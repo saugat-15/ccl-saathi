@@ -7,7 +7,7 @@ Amplify.configure(outputs, { ssr: true });
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { list, downloadData } from "aws-amplify/storage";
-import { getCurrentUser } from "aws-amplify/auth";
+import { fetchAuthSession, getCurrentUser } from "aws-amplify/auth";
 import { generateClient } from "aws-amplify/data";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -36,6 +36,29 @@ function toLabel(s: string) {
   return s.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function listCategoryWithAuthReady(category: string) {
+  const maxAttempts = 4;
+  let lastError: unknown;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      const session = await fetchAuthSession();
+      if (!session.tokens) throw new Error("Auth tokens not ready");
+      if (!session.credentials) {
+        await fetchAuthSession({ forceRefresh: true });
+      }
+      return await list({ path: `dialogues/${category}/`, options: { listAll: true } });
+    } catch (err) {
+      lastError = err;
+      if (attempt < maxAttempts - 1) await sleep(250 * (attempt + 1));
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("Failed to list category dialogues");
+}
+
 export default function CategoryPage({ params }: { params: { category: string } }) {
   const router = useRouter();
   const { category } = params;
@@ -51,7 +74,7 @@ export default function CategoryPage({ params }: { params: { category: string } 
       try {
         const { userId } = await getCurrentUser();
         console.log('userId', userId);
-        const { items } = await list({ path: `dialogues/${category}/`, options: { listAll: true } });
+        const { items } = await listCategoryWithAuthReady(category);
 
         const topLevel = items.filter((item) => item.path.split("/").length === 3 && item.path.split("/")[2]);
         const jsonPaths = topLevel.filter((item) => item.path.endsWith(".json")).map((item) => item.path);

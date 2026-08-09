@@ -1,5 +1,17 @@
 "use client";
 
+import InterpretationCompare from "@/app/components/attempt/InterpretationCompare";
+
+export type GradedSegmentDetails = {
+  segmentIndex?: number;
+  segmentAccuracy?: number;
+  segmentCompleteness?: number;
+  comment?: string;
+  missedTerms?: string[];
+  userPortion?: string;
+  expectedInterpretation?: string;
+};
+
 export type FeedbackDetails = {
   overallScore: number | null;
   accuracyScore: number | null;
@@ -10,7 +22,7 @@ export type FeedbackDetails = {
   suggestions: string[];
   missedTerms: string[];
   criticalErrors: Array<{ segmentIndex?: number; type?: string; impact?: string }>;
-  gradedSegments: Array<{ segmentIndex?: number; segmentAccuracy?: number; comment?: string }>;
+  gradedSegments: GradedSegmentDetails[];
   examReadinessLevel: string | null;
   examReadinessReason: string | null;
 };
@@ -280,7 +292,7 @@ export default function ScoreReport({ details }: { details: FeedbackDetails }) {
       {/* Graded segments */}
       {details.gradedSegments.length > 0 && (
         <div
-          className="border-t pt-5 space-y-3"
+          className="border-t pt-5 space-y-4"
           style={{ borderColor: "var(--border-subtle)" }}
         >
           <p
@@ -289,28 +301,42 @@ export default function ScoreReport({ details }: { details: FeedbackDetails }) {
           >
             Segment Scores
           </p>
-          <div className="space-y-2.5">
+          <div className="space-y-4">
             {details.gradedSegments.slice(0, 12).map((seg, i) => {
               const acc = seg.segmentAccuracy ?? null;
               const segColor = acc !== null ? getScoreColor(acc) : "var(--fg-muted)";
+              const hasCompare =
+                typeof seg.expectedInterpretation === "string" ||
+                typeof seg.userPortion === "string";
               return (
                 <div
                   key={`${seg.segmentIndex ?? "g"}-${i}`}
-                  className="flex items-start gap-2.5 text-xs"
-                  style={{ color: "var(--fg-muted)" }}
+                  className="rounded-lg border p-3 space-y-2"
+                  style={{ borderColor: "var(--border-subtle)" }}
                 >
-                  <span
-                    className="font-mono font-medium shrink-0 w-5 text-right"
-                    style={{ color: "var(--fg-subtle)" }}
+                  <div
+                    className="flex items-start gap-2.5 text-xs"
+                    style={{ color: "var(--fg-muted)" }}
                   >
-                    {seg.segmentIndex ?? i + 1}
-                  </span>
-                  {acc !== null && (
-                    <span className="font-semibold shrink-0 w-7" style={{ color: segColor }}>
-                      {Math.round(acc)}
+                    <span
+                      className="font-mono font-medium shrink-0 w-5 text-right"
+                      style={{ color: "var(--fg-subtle)" }}
+                    >
+                      {seg.segmentIndex ?? i + 1}
                     </span>
+                    {acc !== null && (
+                      <span className="font-semibold shrink-0 w-7" style={{ color: segColor }}>
+                        {Math.round(acc)}
+                      </span>
+                    )}
+                    {seg.comment && <span className="flex-1 leading-relaxed">{seg.comment}</span>}
+                  </div>
+                  {hasCompare && (
+                    <InterpretationCompare
+                      userPortion={seg.userPortion ?? ""}
+                      expectedInterpretation={seg.expectedInterpretation ?? ""}
+                    />
                   )}
-                  {seg.comment && <span className="flex-1 leading-relaxed">{seg.comment}</span>}
                 </div>
               );
             })}

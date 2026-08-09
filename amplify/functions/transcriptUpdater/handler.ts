@@ -62,6 +62,8 @@ type ScoreReport = {
         completeness: number;
         comment: string;
         missedTerms?: string[];
+        /** Attributed slice of userTranscript for this segment (empty if absent). */
+        userPortion: string;
     }>;
     examReadiness: {
         level: 'not_ready' | 'developing' | 'borderline' | 'ready';
@@ -298,6 +300,7 @@ function parseScoreReport(value: unknown): ScoreReport {
                 comment: typeof item.comment === 'string' ? item.comment : '',
                 missedTerms:
                     missed === undefined ? undefined : toStringArray(missed, 'segmentFeedback.missedTerms'),
+                userPortion: typeof item.userPortion === 'string' ? item.userPortion : '',
             };
         }),
         examReadiness: {
@@ -365,6 +368,7 @@ async function scoreTranscript(
                         '',
                         'STEP 2 — ATTRIBUTION: Split userTranscript into portions and attribute each portion to the corresponding referenceSegment in order.',
                         'Each referenceSegment has an expectedInterpretation — compare the attributed portion directly to that.',
+                        'For every segmentFeedback entry set userPortion to the exact attributed text from userTranscript for that segment (empty string if absent).',
                         '',
                         'STEP 3 — SCORE EACH SEGMENT using this rubric (use the full 0–100 range):',
                         '• 0–15: Absent, nonsensical, or completely irrelevant to that segment.',
@@ -434,6 +438,8 @@ async function scoreTranscript(
                                     completeness: 'number 0-100',
                                     comment: 'string',
                                     missedTerms: ['string'],
+                                    userPortion:
+                                        'string — attributed text from userTranscript for this segment; empty if absent',
                                 },
                             ],
                             examReadiness: {
@@ -723,13 +729,20 @@ export const handler = async (event: unknown): Promise<{ statusCode: number; bod
                 examReadinessLevel: report.examReadiness.level,
                 examReadinessReason: report.examReadiness.reason,
                 gradedSegments: JSON.stringify(
-                    report.segmentFeedback.map((segment) => ({
-                        segmentIndex: segment.segmentIndex,
-                        segmentAccuracy: segment.accuracy,
-                        segmentCompleteness: segment.completeness,
-                        missedTerms: segment.missedTerms ?? [],
-                        comment: segment.comment,
-                    })),
+                    report.segmentFeedback.map((segment) => {
+                        const reference = referenceSegments.find(
+                            (ref) => ref.segmentIndex === segment.segmentIndex,
+                        );
+                        return {
+                            segmentIndex: segment.segmentIndex,
+                            segmentAccuracy: segment.accuracy,
+                            segmentCompleteness: segment.completeness,
+                            missedTerms: segment.missedTerms ?? [],
+                            comment: segment.comment,
+                            userPortion: segment.userPortion,
+                            expectedInterpretation: reference?.expectedInterpretation ?? '',
+                        };
+                    }),
                 ),
             };
             const feedbackUpdateStartedAt = Date.now();
@@ -778,10 +791,12 @@ export const handler = async (event: unknown): Promise<{ statusCode: number; bod
             results.push({ key, recordingId });
         } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
+            const userMessage =
+                'Something went wrong while processing this attempt. Please try again.';
             await dataClient.models.Recording.update({
                 id: recordingId,
                 status: 'FAILED',
-                errorMessage: message,
+                errorMessage: userMessage,
             });
             console.error('Transcript updater failed for recording', {
                 key,
