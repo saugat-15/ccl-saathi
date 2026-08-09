@@ -108,9 +108,9 @@
     --danger-soft: var(--red-50);
 
     /* Score palette (raw colors — do not override in dark; keeps marks identical in both themes) */
-    --score-low: var(--red-500);
-    --score-mid: var(--amber-500);
-    --score-high: var(--forest-500);
+  --score-low: var(--red-500);
+  --score-mid: var(--amber-400);
+  --score-high: var(--forest-500);
 
     /* Progress bar fill — same as score-high; not tied to --brand (dark remaps brand) */
     --progress-fill: var(--forest-500);
@@ -204,63 +204,70 @@
 /* Triggered by <html data-theme="dark"> — only semantic tokens flip.
    Raw palette scales stay constant in both modes.                          */
 [data-theme="dark"] {
-  /* shadcn HSL tokens — dark */
-  --background: 148 22% 8%;
-  --foreground: 113 8% 86%;
-  --card: 148 18% 10%;
-  --card-foreground: 113 8% 86%;
-  --popover: 148 18% 10%;
-  --popover-foreground: 113 8% 86%;
+  /* shadcn HSL tokens — darker charcoal-forest */
+  --background: 150 18% 4%;
+  --foreground: 113 8% 88%;
+  --card: 150 16% 6%;
+  --card-foreground: 113 8% 88%;
+  --popover: 150 16% 6%;
+  --popover-foreground: 113 8% 88%;
   --primary: 138 25% 49%; /* forest-400 — lighter for dark bg contrast */
   --primary-foreground: 0 0% 100%;
-  --secondary: 148 14% 13%;
-  --secondary-foreground: 113 8% 86%;
-  --muted: 148 14% 12%;
-  --muted-foreground: 113 7% 62%;
-  --accent: 148 14% 15%;
-  --accent-foreground: 113 8% 86%;
+  --secondary: 150 12% 9%;
+  --secondary-foreground: 113 8% 88%;
+  --muted: 150 12% 8%;
+  --muted-foreground: 113 6% 58%;
+  --accent: 150 12% 11%;
+  --accent-foreground: 113 8% 88%;
   --destructive: 0 70% 70%;
   --destructive-foreground: 0 0% 100%;
-  --border: 150 14% 16%;
-  --input: 150 14% 16%;
+  --border: 150 12% 12%;
+  --input: 150 12% 12%;
   --ring: 138 25% 49%;
 
-  /* CCLSaathi semantic tokens — dark */
-  --bg-page: #0e1512;
-  --bg-surface: #141c17;
-  --bg-sunken: #0a100d;
-  --bg-raised: #1a221d;
+  /* CCLSaathi semantic tokens — darker */
+  --bg-page: #060908;
+  --bg-surface: #0b100e;
+  --bg-sunken: #040605;
+  --bg-raised: #101612;
 
   --brand: var(--forest-400);
   --brand-hover: var(--forest-300);
   --brand-press: var(--forest-200);
-  --brand-soft: rgba(94, 156, 109, 0.14);
+  --brand-soft: rgba(94, 156, 109, 0.12);
 
-  --fg-default: #d8dfd6;
-  --fg-strong: #f1f4ef;
-  --fg-muted: #9aa498;
-  --fg-subtle: #6d7a6c;
-  --fg-on-brand: #0e1512;
+  --fg-default: #d4dbd2;
+  --fg-strong: #f0f3ee;
+  --fg-muted: #8f9a8d;
+  --fg-subtle: #657064;
+  --fg-on-brand: #060908;
 
-  --border-subtle: #253028;
-  --border-default: #33413a;
+  --border-subtle: #171e1a;
+  --border-default: #252e29;
   --border-focus: var(--forest-400);
 
   --success: var(--forest-400);
-  --success-soft: rgba(94, 156, 109, 0.14);
-  --warning-soft: rgba(232, 169, 58, 0.14);
+  --success-soft: rgba(94, 156, 109, 0.12);
+  --warning-soft: rgba(232, 169, 58, 0.12);
   --danger: #f87171;
-  --danger-soft: rgba(239, 68, 68, 0.14);
+  --danger-soft: rgba(239, 68, 68, 0.12);
+
+  /* Soft palette remaps — avoid light mint/cream washes on dark surfaces */
+  --forest-50: rgba(94, 156, 109, 0.08);
+  --forest-100: rgba(94, 156, 109, 0.14);
+  --forest-200: rgba(94, 156, 109, 0.26);
+  --amber-50: rgba(232, 169, 58, 0.08);
+  --amber-100: rgba(232, 169, 58, 0.14);
 
   /* Record stays exact bright red in dark mode */
   --rec: #ef4444;
   --rec-press: #dc2626;
 
   /* Shadows become near-black in dark mode */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 6px 14px rgba(0, 0, 0, 0.45), 0 2px 4px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 16px 32px rgba(0, 0, 0, 0.55), 0 4px 8px rgba(0, 0, 0, 0.3);
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 6px 14px rgba(0, 0, 0, 0.55), 0 2px 4px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 16px 32px rgba(0, 0, 0, 0.65), 0 4px 8px rgba(0, 0, 0, 0.4);
   --shadow-brand: none;
   --shadow-rec: 0 8px 24px rgba(239, 68, 68, 0.45);
   --shadow-focus: 0 0 0 3px rgba(94, 156, 109, 0.35);
@@ -276,20 +283,20 @@
   --ink-700: var(--fg-default);
   --ink-800: var(--fg-strong);
 
-  --indigo-50: rgba(94, 156, 109, 0.1);
-  --indigo-100: rgba(94, 156, 109, 0.18);
+  --indigo-50: rgba(94, 156, 109, 0.08);
+  --indigo-100: rgba(94, 156, 109, 0.14);
   --indigo-300: var(--forest-400);
   --indigo-500: var(--forest-400);
-  --teal-50: rgba(94, 156, 109, 0.1);
-  --teal-100: rgba(94, 156, 109, 0.18);
+  --teal-50: rgba(94, 156, 109, 0.08);
+  --teal-100: rgba(94, 156, 109, 0.14);
   --teal-500: var(--forest-400);
   --teal-600: var(--forest-300);
-  --marigold-50: rgba(232, 169, 58, 0.1);
-  --marigold-100: rgba(232, 169, 58, 0.18);
+  --marigold-50: rgba(232, 169, 58, 0.08);
+  --marigold-100: rgba(232, 169, 58, 0.14);
   --marigold-600: var(--amber-400);
   --marigold-700: var(--amber-400);
-  --crimson-50: rgba(239, 68, 68, 0.1);
-  --crimson-100: rgba(239, 68, 68, 0.18);
+  --crimson-50: rgba(239, 68, 68, 0.08);
+  --crimson-100: rgba(239, 68, 68, 0.14);
   --crimson-500: #f87171;
   --crimson-600: #f87171;
   --crimson-700: #fca5a5;

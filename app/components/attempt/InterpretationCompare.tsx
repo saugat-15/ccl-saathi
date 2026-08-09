@@ -36,14 +36,24 @@ function HighlightedText({
         return (
           <mark
             key={i}
-            className="rounded-sm px-0.5"
-            style={{
-              background:
-                mode === "omission"
-                  ? "color-mix(in srgb, var(--score-low) 22%, transparent)"
-                  : "color-mix(in srgb, var(--score-mid) 22%, transparent)",
-              color: mode === "omission" ? "var(--score-low)" : "var(--fg-strong)",
-            }}
+            className="rounded-sm"
+            style={
+              mode === "omission"
+                ? {
+                    background: "color-mix(in srgb, var(--score-low) 28%, transparent)",
+                    color: "var(--score-low)",
+                    padding: "1px 4px",
+                    marginInline: 1,
+                  }
+                : {
+                    /* amber-400 pops on dark; amber-500 reads muddy */
+                    background: "color-mix(in srgb, var(--amber-400) 38%, transparent)",
+                    color: "var(--amber-400)",
+                    boxShadow: "inset 0 0 0 1px color-mix(in srgb, var(--amber-400) 45%, transparent)",
+                    padding: "1px 4px",
+                    marginInline: 1,
+                  }
+            }
           >
             {part.value}
           </mark>
@@ -104,7 +114,7 @@ export default function InterpretationCompare({
         <p className="text-[10px]" style={{ color: "var(--fg-subtle)" }}>
           <span style={{ color: "var(--score-low)" }}>Red</span> = missing from yours
           {" · "}
-          <span style={{ color: "var(--score-mid)" }}>Amber</span> = extra / different in yours
+          <span style={{ color: "var(--amber-400)" }}>Amber</span> = extra / different in yours
         </p>
       )}
     </div>
