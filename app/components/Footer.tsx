@@ -10,7 +10,7 @@ export default function Footer() {
               CCL<span className="text-primary">Saathi</span>
             </p>
             <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-              Bilingual dialogue practice for the NAATI CCL exam — structured audio, real topics,
+              Bilingual dialogue practice for the NAATI CCL exam. Structured audio, real topics,
               self-paced review.
             </p>
           </div>

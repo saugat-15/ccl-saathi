@@ -281,7 +281,7 @@ export default function ScoreReport({ details }: { details: FeedbackDetails }) {
                 </span>
                 <span>
                   {err.type ?? ""}
-                  {err.impact ? ` — ${err.impact}` : ""}
+                  {err.impact ? `: ${err.impact}` : ""}
                 </span>
               </li>
             ))}

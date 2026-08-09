@@ -353,7 +353,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
           (billing.subscriptionExpiresAt == null ||
             new Date(billing.subscriptionExpiresAt) > new Date());
 
-        if (!hasValidSubscription && (billing.freeAttempts ?? 0) >= 2) {
+        if (!hasValidSubscription && (billing.freeAttempts ?? 0) >= 5) {
           setShowUpgradeModal(true);
           return;
         }
@@ -480,7 +480,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
         (billing.subscriptionExpiresAt == null ||
           new Date(billing.subscriptionExpiresAt) > new Date());
 
-      if (!hasValidSubscription && (billing.freeAttempts ?? 0) >= 2) {
+      if (!hasValidSubscription && (billing.freeAttempts ?? 0) >= 5) {
         setShowUpgradeModal(true);
         return;
       }
@@ -733,7 +733,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
             }}>
               <Trophy style={{ width: 15, height: 15, color: "var(--score-high)", flexShrink: 0 }} />
               <p style={{ fontSize: 13, color: "var(--fg-default)", margin: 0 }}>
-                Your last score was <strong>{Math.round(previousScore)}/100</strong> — try to beat it!
+                Your last score was <strong>{Math.round(previousScore)}/100</strong>. Try to beat it!
               </p>
             </div>
           )}
@@ -844,7 +844,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
                               fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase",
                               fontWeight: 700, color: "var(--fg-muted)", margin: "0 0 6px",
                             }}>
-                              Source — interpret this
+                              Source: interpret this
                             </p>
                             <p style={{
                               fontSize: 13, color: "var(--fg-default)", margin: 0,
@@ -936,7 +936,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
 
       </div>{/* end max-w-5xl */}
 
-      {/* ── Upgrade modal ───────────────────────────────────────────────── */}
+      {/* ── Limit reached modal ─────────────────────────────────────────── */}
       {showUpgradeModal && (
         <div
           style={{
@@ -979,14 +979,14 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
               fontFamily: "var(--font-serif)", fontSize: 20, fontWeight: 600,
               color: "var(--fg-strong)", margin: "0 0 10px",
             }}>
-              Free attempt limit reached
+              You&apos;ve maxed out this dialogue
             </h2>
             <p style={{ fontSize: 14, color: "var(--fg-muted)", margin: "0 0 24px", lineHeight: 1.6 }}>
-              You&apos;ve used your 2 free practice attempts. Upgrade to Pro to keep practising with unlimited submissions.
+              You&apos;ve used all 5 free attempts for this dialogue. Pro will unlock unlimited attempts. Join the waitlist to be first when it launches.
             </p>
 
             <button
-              onClick={() => router.push("/pricing")}
+              onClick={() => router.push("/pricing#waitlist")}
               style={{
                 width: "100%", padding: "12px 20px", borderRadius: 10,
                 background: "var(--brand)", border: "none", color: "#fff",
@@ -997,10 +997,10 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
               }}
             >
               <Zap style={{ width: 15, height: 15 }} />
-              Upgrade to Pro
+              Join the waitlist
             </button>
             <button
-              onClick={() => setShowUpgradeModal(false)}
+              onClick={() => router.push("/")}
               style={{
                 width: "100%", padding: "11px 20px", borderRadius: 10,
                 background: "none", border: "1px solid var(--border-subtle)", color: "var(--fg-muted)",
@@ -1008,7 +1008,7 @@ export default function PracticePage({ params }: { params: { dialogueId: string 
                 cursor: "pointer",
               }}
             >
-              Maybe later
+              Practice another category
             </button>
           </div>
         </div>

@@ -5,7 +5,7 @@ const STEPS = [
   {
     icon: Headphones,
     title: "Pick a category",
-    body: "Choose a NAATI CCL topic that matches what you want to practise — health, legal, housing, and more.",
+    body: "Choose a NAATI CCL topic that matches what you want to practise, such as health, legal, housing, and more.",
   },
   {
     icon: Mic,
@@ -15,7 +15,7 @@ const STEPS = [
   {
     icon: BarChart3,
     title: "Get your AI score",
-    body: "Submit your recording for instant AI feedback — accuracy, fluency, terminology, and an overall score.",
+    body: "Submit your recording for instant AI feedback: accuracy, fluency, terminology, and an overall score.",
   },
 ];
 
@@ -57,8 +57,8 @@ export default function GettingStartedBanner({ firstCategorySlug, givenName }: P
             {greeting}
           </h2>
           <p style={{ fontSize: 13, color: "var(--fg-muted)", margin: 0, maxWidth: 460 }}>
-            You have not attempted any dialogues yet. Choose a category below to begin —
-            your scores will appear here once you complete your first practice.
+            You have not attempted any dialogues yet. Choose a category below to begin.
+            Your scores will appear here once you complete your first practice.
           </p>
         </div>
         {firstCategorySlug && (

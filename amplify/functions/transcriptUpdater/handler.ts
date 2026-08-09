@@ -617,6 +617,29 @@ export const handler = async (event: unknown): Promise<{ statusCode: number; bod
                 elapsedMs: elapsedMs(recordingLookupStartedAt),
             });
 
+            // ── Free-attempt gate (backend enforcement) ──────────────────────
+            const userId = recordingGet.data.userId;
+            const billingList = await dataClient.models.BillingProfile.list({
+                filter: { userId: { eq: userId } },
+            });
+            const billing = billingList.data?.[0];
+            const hasValidSubscription =
+                billing?.hasSubscription === true &&
+                (billing.subscriptionExpiresAt == null ||
+                    new Date(billing.subscriptionExpiresAt) > new Date());
+
+            if (!hasValidSubscription && (billing?.freeAttempts ?? 0) >= 5) {
+                console.warn('Free attempt limit reached, rejecting', { userId, recordingId, freeAttempts: billing?.freeAttempts });
+                await dataClient.models.Recording.update({
+                    id: recordingId,
+                    status: 'FAILED',
+                    errorMessage: "You've reached the 5-attempt limit for free accounts. Join the Pro waitlist to keep practising.",
+                });
+                results.push({ key, recordingId, error: 'limit_reached' });
+                continue;
+            }
+            // ─────────────────────────────────────────────────────────────────
+
             const recordingUpdateToScoring = await dataClient.models.Recording.update({
                 id: recordingId,
                 status: 'SCORING',

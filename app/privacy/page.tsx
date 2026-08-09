@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "Privacy policy for CCLSaathi — how we collect, use, and protect your data.",
+  description: "Privacy policy for CCLSaathi: how we collect, use, and protect your data.",
 };
 
 const EFFECTIVE_DATE = "1 May 2025";
@@ -91,16 +91,16 @@ export default function PrivacyPage() {
             </p>
             <ul className="mt-2 list-disc list-outside ml-5 space-y-1 text-muted-foreground">
               <li>
-                <strong>AWS (Amazon Web Services)</strong> — authentication (Cognito), database
+                <strong>AWS (Amazon Web Services)</strong>: authentication (Cognito), database
                 (DynamoDB via AppSync), file storage (S3), and serverless compute (Lambda). Data is
                 stored in the AWS ap-southeast-2 (Sydney) region.
               </li>
               <li>
-                <strong>OpenAI</strong> — audio recordings are sent to the Whisper API for
+                <strong>OpenAI</strong>: audio recordings are sent to the Whisper API for
                 transcription. OpenAI&rsquo;s API data usage policy applies.
               </li>
               <li>
-                <strong>Anthropic</strong> — transcripts are sent to the Claude API for scoring and
+                <strong>Anthropic</strong>: transcripts are sent to the Claude API for scoring and
                 feedback generation. Anthropic&rsquo;s API data usage policy applies.
               </li>
             </ul>

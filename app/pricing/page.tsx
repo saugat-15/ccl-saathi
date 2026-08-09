@@ -84,7 +84,7 @@ function WaitlistForm() {
           </div>
           {status === "error" && (
             <p style={{ fontSize: 12, color: "var(--danger)", margin: 0 }}>
-              Something went wrong — please try again.
+              Something went wrong. Please try again.
             </p>
           )}
           <button
@@ -363,7 +363,7 @@ export default function PricingPage() {
                 </button>
               )}
               <p style={{ fontSize: 12, color: "var(--fg-muted)", textAlign: "center", margin: "10px 0 0" }}>
-                Billing coming soon — join the waitlist for launch pricing.
+                Billing coming soon. Join the waitlist for launch pricing.
               </p>
             </div>
           </div>
@@ -467,7 +467,7 @@ export default function PricingPage() {
               },
               {
                 q: "Can I try Pro before paying?",
-                a: "Yes — we'll offer a trial period at launch. The Free plan will always remain available with no time limit.",
+                a: "Yes, we'll offer a trial period at launch. The Free plan will always remain available with no time limit.",
               },
               {
                 q: "What payment methods will you accept?",
@@ -529,7 +529,7 @@ export default function PricingPage() {
             </h2>
             <p className="text-sm text-muted-foreground leading-relaxed mb-6">
               We&apos;re putting the finishing touches on billing. Join the waitlist and
-              we&apos;ll notify you the moment Pro is available — with early-access pricing.
+              we&apos;ll notify you the moment Pro is available, with early-access pricing.
             </p>
 
             <button
